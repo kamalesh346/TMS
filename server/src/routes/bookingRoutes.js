@@ -15,4 +15,5 @@ router.get('/all', authMiddleware, getAllBookings); // Admin route
 // Delete booking by the user
 router.delete('/:id', authMiddleware, cancelBooking); // ✅ DELETE /api/bookings/:id
 
+
 module.exports = router;

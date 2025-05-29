@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const sendMail = require('../utils/email');
 
 // Create a new booking (BOOKER only)
 const createBooking = async (req, res) => {
@@ -7,17 +8,14 @@ const createBooking = async (req, res) => {
   const userId = req.user.userId;
   const userRole = req.user.role;
 
-  // Only BOOKER role can create bookings
   if (userRole.toLowerCase() !== 'booker') {
     return res.status(403).json({ message: 'Only BOOKER users can create bookings' });
   }
 
-  // Validate required fields
   if (!purpose || !pickup || !delivery || !itemDesc || weight === undefined) {
     return res.status(400).json({ message: 'All fields are required' });
   }
 
-  // Validate weight
   const parsedWeight = parseFloat(weight);
   if (isNaN(parsedWeight) || parsedWeight <= 0) {
     return res.status(400).json({ message: 'Weight must be a positive number' });
@@ -35,16 +33,55 @@ const createBooking = async (req, res) => {
       },
     });
 
+    // Get user's email
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    console.log('User fetched for email:', user);
+
+    if (user?.email) {
+      await sendMail({
+        to: user.email,
+        subject: 'Booking Confirmation',
+        html: `
+          <h2>Booking Created Successfully</h2>
+          <p>Hello ${user.name || 'User'},</p>
+          <p>Your booking has been created successfully with the following details:</p>
+          <ul>
+            <li><strong>Booking ID:</strong> ${newBooking.id}</li>
+            <li><strong>Purpose:</strong> ${purpose}</li>
+            <li><strong>Pickup:</strong> ${pickup}</li>
+            <li><strong>Delivery:</strong> ${delivery}</li>
+            <li><strong>Weight:</strong> ${weight} kg</li>
+          </ul>
+          <p>Status: <strong>${newBooking.status}</strong></p>
+        `,
+      });
+      // Send email to admin
+await sendMail({
+  to: process.env.ADMIN_EMAIL,
+  subject: 'New Booking Request Submitted',
+  html: `
+    <h2>New Booking Request</h2>
+    <p>User <strong>${user.name || 'User'}</strong> (ID: ${user.id}) has submitted a new booking.</p>
+    <ul>
+      <li><strong>Purpose:</strong> ${purpose}</li>
+      <li><strong>Pickup:</strong> ${pickup}</li>
+      <li><strong>Delivery:</strong> ${delivery}</li>
+      <li><strong>Weight:</strong> ${weight} kg</li>
+      <li><strong>Status:</strong> ${newBooking.status}</li>
+    </ul>
+    <p>Please review and approve/reject the request in the admin dashboard.</p>
+  `,
+});
+
+    }
+
     return res.status(201).json({
       message: 'Booking created successfully',
       booking: newBooking,
     });
   } catch (error) {
     console.error('Booking creation error:', error);
-    return res.status(500).json({
-      message: 'Server error',
-      error: error.message,
-    });
+    return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -66,14 +103,11 @@ const getUserBookings = async (req, res) => {
     return res.status(200).json({ bookings });
   } catch (error) {
     console.error('Error fetching user bookings:', error);
-    return res.status(500).json({
-      message: 'Server error',
-      error: error.message,
-    });
+    return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
-// Get all bookings (admin only)
+// Get all bookings (admin only) with optional status filter
 const getAllBookings = async (req, res) => {
   const userRole = req.user.role;
   const { status } = req.query;
@@ -84,14 +118,11 @@ const getAllBookings = async (req, res) => {
 
   try {
     const filters = {};
-
-    // If query param "status" is provided, apply filtering
     if (status) {
       const validStatuses = ['pending', 'cancelled', 'completed'];
       if (!validStatuses.includes(status.toLowerCase())) {
         return res.status(400).json({ message: 'Invalid status filter' });
       }
-
       filters.status = status.toLowerCase();
     }
 
@@ -108,7 +139,7 @@ const getAllBookings = async (req, res) => {
 };
 
 // Cancel booking (only if status is pending and user owns it)
-const cancelBooking = async (req, res) => { 
+const cancelBooking = async (req, res) => {
   const userId = req.user.userId;
   const userRole = req.user.role;
   const bookingId = parseInt(req.params.id);
@@ -132,11 +163,26 @@ const cancelBooking = async (req, res) => {
       return res.status(400).json({ message: 'Only pending bookings can be cancelled' });
     }
 
-    // 🔄 Change status instead of deleting
     await prisma.booking.update({
       where: { id: bookingId },
-      data: { status: 'cancelled' }
+      data: { status: 'cancelled' },
     });
+
+    // Get user's email
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+
+    if (user?.email) {
+      await sendMail({
+        to: user.email,
+        subject: 'Booking Cancelled',
+        html: `
+          <h2>Booking Cancelled</h2>
+          <p>Hello ${user.name || 'User'},</p>
+          <p>Your booking from <strong>${booking.pickup}</strong> to <strong>${booking.delivery}</strong> has been cancelled.</p>
+        `,
+      });
+      
+    }
 
     return res.status(200).json({ message: 'Booking cancelled successfully' });
   } catch (error) {
@@ -144,8 +190,6 @@ const cancelBooking = async (req, res) => {
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
-
-
 
 module.exports = {
   createBooking,
