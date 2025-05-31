@@ -1,0 +1,32 @@
+tms/
+├── client/
+│   ├── public/
+│   │   └── index.html
+│   ├── src/
+│   │   ├── assets/               # Static assets (logos, images)
+│   │   ├── components/           # Reusable UI components
+│   │   │   ├── Header.jsx
+│   │   │   ├── BookingCard.jsx
+│   │   │   ├── BookingForm.jsx
+│   │   │   └── Sidebar.jsx
+│   │   ├── context/              # Global context (AuthContext)
+│   │   │   └── AuthContext.jsx
+│   │   ├── hooks/                # Custom React hooks
+│   │   │   └── useAuth.js
+│   │   ├── pages/                # All page views
+│   │   │   ├── Login.jsx
+│   │   │   ├── Register.jsx
+│   │   │   └── Dashboard/
+│   │   │       ├── BookerDashboard.jsx
+│   │   │       ├── AdminDashboard.jsx
+│   │   │       └── DriverDashboard.jsx
+│   │   ├── services/             # Axios API calls
+│   │   │   └── api.js
+│   │   ├── App.jsx               # Main App component (routes)
+│   │   └── main.jsx              # Entry point
+│   ├── .env                     # Environment variables (REACT_APP_API_URL, etc.)
+│   ├── tailwind.config.js
+│   ├── postcss.config.js
+│   ├── vite.config.js           # if using Vite
+│   ├── package.json
+│   └── .gitignore

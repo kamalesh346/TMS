@@ -56,34 +56,80 @@ const createBooking = async (req, res) => {
         `,
       });
       // Send email to admin
-await sendMail({
-  to: process.env.ADMIN_EMAIL,
-  subject: 'New Booking Request Submitted',
-  html: `
-    <h2>New Booking Request</h2>
-    <p>User <strong>${user.name || 'User'}</strong> (ID: ${user.id}) has submitted a new booking.</p>
-    <ul>
-      <li><strong>Purpose:</strong> ${purpose}</li>
-      <li><strong>Pickup:</strong> ${pickup}</li>
-      <li><strong>Delivery:</strong> ${delivery}</li>
-      <li><strong>Weight:</strong> ${weight} kg</li>
-      <li><strong>Status:</strong> ${newBooking.status}</li>
-    </ul>
-    <p>Please review and approve/reject the request in the admin dashboard.</p>
-  `,
-});
+      await sendMail({
+        to: process.env.ADMIN_EMAIL,
+        subject: 'New Booking Request Submitted',
+        html: `
+          <h2>New Booking Request</h2>
+          <p>User <strong>${user.name || 'User'}</strong> (ID: ${user.id}) has submitted a new booking.</p>
+          <ul>
+            <li><strong>Purpose:</strong> ${purpose}</li>
+            <li><strong>Pickup:</strong> ${pickup}</li>
+            <li><strong>Delivery:</strong> ${delivery}</li>
+            <li><strong>Weight:</strong> ${weight} kg</li>
+            <li><strong>Status:</strong> ${newBooking.status}</li>
+          </ul>
+          <p>Please review and approve/reject the request in the admin dashboard.</p>
+        `,
+      });
 
+          }
+
+          return res.status(201).json({
+            message: 'Booking created successfully',
+            booking: newBooking,
+          });
+        } catch (error) {
+          console.error('Booking creation error:', error);
+          return res.status(500).json({ message: 'Server error', error: error.message });
+        }
+      };
+
+// admin control approve / reject
+const updateBookingStatus = async (req, res) => {
+  const userRole = req.user.role;
+  const bookingId = parseInt(req.params.id);
+  const { status } = req.body;
+  console.log('Received status:', status);
+  
+  if (userRole.toLowerCase() !== 'admin') {
+    return res.status(403).json({ message: 'Only ADMIN can update booking status' });
+  }
+
+  if (!['approved', 'rejected'].includes(status)) {
+    return res.status(400).json({ message: 'Invalid status. Must be "approved" or "rejected"' });
+  }
+
+  try {
+    const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+    const updated = await prisma.booking.update({
+      where: { id: bookingId },
+      data: { status },
+    });
+
+    // Notify the user
+    const user = await prisma.user.findUnique({ where: { id: booking.userId } });
+    if (user?.email) {
+      await sendMail({
+        to: user.email,
+        subject: `Booking ${status}`,
+        html: `
+          <p>Hello ${user.name || 'User'},</p>
+          <p>Your booking (ID: ${bookingId}) has been <strong>${status}</strong>.</p>
+        `,
+      });
     }
 
-    return res.status(201).json({
-      message: 'Booking created successfully',
-      booking: newBooking,
-    });
+    return res.status(200).json({ message: `Booking ${status}`, booking: updated });
   } catch (error) {
-    console.error('Booking creation error:', error);
+    console.error('Status update error:', error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
 
 // Get bookings for the logged-in BOOKER
 const getUserBookings = async (req, res) => {
@@ -196,4 +242,5 @@ module.exports = {
   getUserBookings,
   getAllBookings,
   cancelBooking,
+  updateBookingStatus ,
 };
