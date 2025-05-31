@@ -1,17 +1,14 @@
-import React from 'react';
-import { Button, Container, Typography } from '@mui/material';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import Register from "./pages/Register";
 
-function App() {
+export default function App() {
   return (
-    <Container maxWidth="sm" sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Transport Management System
-      </Typography>
-      <Button variant="contained" color="primary">
-        Sample Button
-      </Button>
-    </Container>
+    <Router>
+      <Routes>
+        <Route path="/register" element={<Register />} />
+        <Route path="*" element={<Navigate to="/register" replace />} />
+      </Routes>
+    </Router>
   );
 }
-
-export default App;
