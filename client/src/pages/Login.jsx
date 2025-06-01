@@ -76,7 +76,7 @@ export default function Login() {
         <Box sx={{ mt: 2, textAlign: "center" }}>
           <Typography variant="body2">
             Don’t have an account?{" "}
-            <Link component={RouterLink} to="/">
+            <Link component={RouterLink} to="/register">
               Register
             </Link>
           </Typography>
