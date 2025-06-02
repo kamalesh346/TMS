@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Container, Typography, Box, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import * as jwt_decode from "jwt-decode";
+import * as jwt_decode from 'jwt-decode';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -15,7 +15,7 @@ export default function Dashboard() {
     }
 
     try {
-      const decoded = jwt_decode.default(token);
+      const decoded = jwt_decode.jwtDecode(token);
       setRole(decoded.role);
     } catch (err) {
       console.error("Invalid token", err);
@@ -31,11 +31,11 @@ export default function Dashboard() {
 
   const renderDashboardContent = () => {
     switch (role) {
-      case "BOOKER":
+      case "booker":
         return <Typography>You are logged in as a <strong>Booker</strong>.</Typography>;
-      case "DRIVER":
+      case "driver":
         return <Typography>You are logged in as a <strong>Driver</strong>.</Typography>;
-      case "ADMIN":
+      case "admin":
         return <Typography>You are logged in as an <strong>Admin</strong>.</Typography>;
       default:
         return <Typography>Unknown role. Please contact support.</Typography>;
