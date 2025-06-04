@@ -65,10 +65,12 @@ import React, { useEffect, useState } from "react";
 import { Container, Typography, Box, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import * as jwt_decode from 'jwt-decode';
+import CreateBookingModal from "../components/CreateBookingModal"; // 👈 Add this
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [role, setRole] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false); // 👈 State for modal
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -92,10 +94,27 @@ export default function Dashboard() {
     navigate("/login");
   };
 
+  const handleBookingCreated = () => {
+    // Optionally refresh bookings or show a toast
+    console.log("Booking created successfully");
+  };
+
   const renderDashboardContent = () => {
     switch (role) {
       case "booker":
-        return <Typography>You are logged in as a <strong>Booker</strong>.</Typography>;
+        return (
+          <>
+            <Typography>You are logged in as a <strong>Booker</strong>.</Typography>
+            <Button
+              variant="contained"
+              color="success"
+              sx={{ mt: 3 }}
+              onClick={() => setIsModalOpen(true)}
+            >
+              Create Booking
+            </Button>
+          </>
+        );
       case "driver":
         return <Typography>You are logged in as a <strong>Driver</strong>.</Typography>;
       case "admin":
@@ -121,6 +140,13 @@ export default function Dashboard() {
           Logout
         </Button>
       </Box>
+
+      {/* Booking modal (only shown if isModalOpen is true) */}
+      <CreateBookingModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onBookingCreated={handleBookingCreated}
+      />
     </Container>
   );
 }

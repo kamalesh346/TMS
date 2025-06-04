@@ -1,10 +1,3 @@
-//newly added
-// src/pages/DriverTrips.jsx
-// import React from "react";
-
-// export default function DriverTrips() {
-//   return <div>Driver Trips Page</div>;
-// }
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Container, Typography, List, ListItem, ListItemText, Button, Box } from "@mui/material";

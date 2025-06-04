@@ -4,6 +4,9 @@ const sendMail = require('../utils/email');
 
 // Create a new booking (BOOKER only)
 const createBooking = async (req, res) => {
+  console.log("Booking payload:", req.body);
+  console.log("User from token:", req.user);
+
   const { purpose, pickup, delivery, itemDesc, weight } = req.body;
   const userId = req.user.userId;
   const userRole = req.user.role;

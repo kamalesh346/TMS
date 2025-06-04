@@ -1,13 +1,21 @@
-//newly added
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Container, Typography, Button, Box, CircularProgress, Alert } from "@mui/material";
+import {
+  Container,
+  Typography,
+  Button,
+  Box,
+  CircularProgress,
+  Alert,
+} from "@mui/material";
+import CreateBookingModal from "../components/CreateBookingModal"; // 👈 Import modal
 
 export default function Bookings() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cancelingId, setCancelingId] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false); // 👈 Modal open state
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -18,7 +26,7 @@ export default function Bookings() {
         headers: { Authorization: `Bearer ${token}` },
       });
       console.log("Fetched bookings:", response.data.bookings);
-      setBookings(response.data.bookings || []); // <-- safeguard here
+      setBookings(response.data.bookings || []);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to fetch bookings");
     } finally {
@@ -39,8 +47,7 @@ export default function Bookings() {
       await axios.delete(`/api/bookings/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // Refresh bookings after cancellation
-      fetchBookings();
+      fetchBookings(); // Refresh after cancel
     } catch (err) {
       setError(err.response?.data?.message || "Failed to cancel booking");
     } finally {
@@ -48,15 +55,27 @@ export default function Bookings() {
     }
   };
 
+  const handleBookingCreated = () => {
+    setIsModalOpen(false);
+    fetchBookings(); // Refresh after new booking
+  };
+
   if (loading) return <CircularProgress />;
 
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>
-      <Typography variant="h5" gutterBottom>
-        My Bookings
-      </Typography>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+        <Typography variant="h5">My Bookings</Typography>
+        <Button variant="contained" color="success" onClick={() => setIsModalOpen(true)}>
+          Create Booking
+        </Button>
+      </Box>
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
 
       {bookings.length === 0 ? (
         <Typography>No bookings found.</Typography>
@@ -92,6 +111,13 @@ export default function Bookings() {
           </Box>
         ))
       )}
+
+      {/* Booking Modal */}
+      <CreateBookingModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onBookingCreated={handleBookingCreated}
+      />
     </Container>
   );
 }
