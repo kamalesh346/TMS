@@ -3,7 +3,6 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const authRoutes = require('./routes/authRoutes'); // Correct path for the routes file
 const bookingRoutes = require('./routes/bookingRoutes');
-// const bookingRoutes = require('./src/routes/bookingRoutes');
 
 dotenv.config();
 
