@@ -1,107 +1,263 @@
-//newly created
-// src/components/CreateBookingModal.jsx
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState } from "react";
+import {
+  Modal,
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Grid,
+  Alert,
+} from "@mui/material";
+import axios from "axios";
 
-const CreateBookingModal = ({ isOpen, onClose, onBookingCreated }) => {
-  const [formData, setFormData] = useState({
-    purpose: '',
-    pickup: '',
-    delivery: '',
-    itemDesc: '',
-    weight: '',
+const modalStyle = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: "90%",
+  maxWidth: 600,
+  bgcolor: "background.paper",
+  borderRadius: 2,
+  boxShadow: 24,
+  p: 4,
+};
+
+export default function CreateBookingModal({ open, onClose, onSubmit }) {
+  const [form, setForm] = useState({
+    purpose: "",
+    pickup: "",
+    delivery: "",
+    itemDesc: "",
+    weight: "",
+    vehicleType: "",
+    vehicleLength: "",
+    vehicleBreadth: "",
+    vehicleHeight: "",
+    startTime: "",
+    endTime: "",
   });
 
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setForm((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleCreate = async () => {
+    setLoading(true);
+    setError("");
+
+    for (const [key, value] of Object.entries(form)) {
+      if (!value) {
+        setError(`Please fill the "${key}" field.`);
+        setLoading(false);
+        return;
+      }
+    }
+
+    const payload = {
+      purpose: form.purpose,
+      pickup: form.pickup,
+      delivery: form.delivery,
+      itemDesc: form.itemDesc,
+      weight: Number(form.weight),
+      vehicleType: form.vehicleType,
+      vehicleLength: Number(form.vehicleLength),
+      vehicleBreadth: Number(form.vehicleBreadth),
+      vehicleHeight: Number(form.vehicleHeight),
+      startTime: form.startTime,
+      endTime: form.endTime,
+    };
+
+    console.log("📤 Sending to backend:", payload);
+
     try {
-      await axios.post('/api/bookings/create', formData, {
+      const token = localStorage.getItem("token");
+      await axios.post("/api/bookings/create", payload, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${token}`,
         },
       });
-      onBookingCreated(); // refresh the bookings list
-      onClose(); // close modal
+
+      if (onSubmit) onSubmit();
+      handleClose();
     } catch (err) {
-      console.error(err);
-      alert(err.response?.data?.message || 'Booking failed');
+      setError(err.response?.data?.message || "Failed to create booking");
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (!isOpen) return null;
+  const handleClose = () => {
+    setForm({
+      purpose: "",
+      pickup: "",
+      delivery: "",
+      itemDesc: "",
+      weight: "",
+      vehicleType: "",
+      vehicleLength: "",
+      vehicleBreadth: "",
+      vehicleHeight: "",
+      startTime: "",
+      endTime: "",
+    });
+    setError("");
+    onClose();
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
-        <h2 className="text-xl font-semibold mb-4">Create Booking</h2>
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <input
-            type="text"
-            name="purpose"
-            placeholder="Purpose"
-            value={formData.purpose}
-            onChange={handleChange}
-            required
-            className="w-full border rounded p-2"
-          />
-          <input
-            type="text"
-            name="pickup"
-            placeholder="Pickup Location"
-            value={formData.pickup}
-            onChange={handleChange}
-            required
-            className="w-full border rounded p-2"
-          />
-          <input
-            type="text"
-            name="delivery"
-            placeholder="Delivery Location"
-            value={formData.delivery}
-            onChange={handleChange}
-            required
-            className="w-full border rounded p-2"
-          />
-          <textarea
-            name="itemDesc"
-            placeholder="Item Description"
-            value={formData.itemDesc}
-            onChange={handleChange}
-            required
-            className="w-full border rounded p-2"
-          />
-          <input
-            type="number"
-            name="weight"
-            placeholder="Weight (kg)"
-            value={formData.weight}
-            onChange={handleChange}
-            required
-            className="w-full border rounded p-2"
-          />
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Submit
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
+    <Modal open={open} onClose={handleClose}>
+      <Box sx={modalStyle}>
+        <Typography variant="h6" mb={2} fontWeight="bold">
+          Create Booking
+        </Typography>
 
-export default CreateBookingModal;
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Purpose"
+              name="purpose"
+              value={form.purpose}
+              onChange={handleChange}
+            />
+          </Grid>
+
+          <Grid item xs={6}>
+            <TextField
+              fullWidth
+              label="Pickup Location"
+              name="pickup"
+              value={form.pickup}
+              onChange={handleChange}
+            />
+          </Grid>
+
+          <Grid item xs={6}>
+            <TextField
+              fullWidth
+              label="Delivery Location"
+              name="delivery"
+              value={form.delivery}
+              onChange={handleChange}
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Item Description"
+              name="itemDesc"
+              value={form.itemDesc}
+              onChange={handleChange}
+            />
+          </Grid>
+
+          <Grid item xs={6}>
+            <TextField
+              fullWidth
+              label="Weight (kg)"
+              name="weight"
+              type="number"
+              value={form.weight}
+              onChange={handleChange}
+            />
+          </Grid>
+
+          <Grid item xs={6}>
+            <TextField
+              fullWidth
+              label="Vehicle Type"
+              name="vehicleType"
+              value={form.vehicleType}
+              onChange={handleChange}
+            />
+          </Grid>
+
+          <Grid item xs={4}>
+            <TextField
+              fullWidth
+              label="Length (m)"
+              name="vehicleLength"
+              type="number"
+              value={form.vehicleLength}
+              onChange={handleChange}
+            />
+          </Grid>
+
+          <Grid item xs={4}>
+            <TextField
+              fullWidth
+              label="Breadth (m)"
+              name="vehicleBreadth"
+              type="number"
+              value={form.vehicleBreadth}
+              onChange={handleChange}
+            />
+          </Grid>
+
+          <Grid item xs={4}>
+            <TextField
+              fullWidth
+              label="Height (m)"
+              name="vehicleHeight"
+              type="number"
+              value={form.vehicleHeight}
+              onChange={handleChange}
+            />
+          </Grid>
+
+          <Grid item xs={6}>
+            <TextField
+              fullWidth
+              label="Start Time"
+              name="startTime"
+              type="datetime-local"
+              value={form.startTime}
+              onChange={handleChange}
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
+
+          <Grid item xs={6}>
+            <TextField
+              fullWidth
+              label="End Time"
+              name="endTime"
+              type="datetime-local"
+              value={form.endTime}
+              onChange={handleChange}
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
+        </Grid>
+
+        <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
+          <Button onClick={handleClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={handleCreate}
+            disabled={loading}
+          >
+            {loading ? "Creating..." : "Create Booking"}
+          </Button>
+        </Box>
+      </Box>
+    </Modal>
+  );
+}

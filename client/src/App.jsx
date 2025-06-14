@@ -6,7 +6,6 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Navbar from "./components/Navbar";
 import Bookings from "./pages/Bookings";
-import CreateBooking from "./pages/createBooking";
 import AdminPanel from "./pages/AdminPanel";
 import DriverTrips from "./pages/DriverTrips";
 import ProtectedRoute from "./components/ProtectedRoute"; // ⬅️ Make sure it's imported
@@ -52,14 +51,14 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route
+        {/* <Route
           path="/create-booking"
           element={
             <ProtectedRoute allowedRoles={["booker"]}>
               <CreateBooking />
             </ProtectedRoute>
           }
-        />
+        /> */}
 
         {/* Admin-only Route */}
         <Route

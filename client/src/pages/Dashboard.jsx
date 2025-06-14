@@ -1,76 +1,19 @@
-// import React, { useEffect, useState } from "react";
-// import { Container, Typography, Box, Button } from "@mui/material";
-// import { useNavigate } from "react-router-dom";
-// import * as jwt_decode from 'jwt-decode';
-
-// export default function Dashboard() {
-//   const navigate = useNavigate();
-//   const [role, setRole] = useState("");
-
-//   useEffect(() => {
-//     const token = localStorage.getItem("token");
-//     if (!token) {
-//       navigate("/login");
-//       return;
-//     }
-
-//     try {
-//       const decoded = jwt_decode.jwtDecode(token);
-//       setRole(decoded.role);
-//     } catch (err) {
-//       console.error("Invalid token", err);
-//       localStorage.removeItem("token");
-//       navigate("/login");
-//     }
-//   }, [navigate]);
-
-//   const handleLogout = () => {
-//     localStorage.removeItem("token");
-//     navigate("/login");
-//   };
-
-//   const renderDashboardContent = () => {
-//     switch (role) {
-//       case "booker":
-//         return <Typography>You are logged in as a <strong>Booker</strong>.</Typography>;
-//       case "driver":
-//         return <Typography>You are logged in as a <strong>Driver</strong>.</Typography>;
-//       case "admin":
-//         return <Typography>You are logged in as an <strong>Admin</strong>.</Typography>;
-//       default:
-//         return <Typography>Unknown role. Please contact support.</Typography>;
-//     }
-//   };
-
-//   return (
-//     <Container maxWidth="md">
-//       <Box sx={{ mt: 8, textAlign: "center" }}>
-//         <Typography variant="h4" gutterBottom>
-//           Welcome to the Dashboard
-//         </Typography>
-//         {renderDashboardContent()}
-//         <Button
-//           variant="outlined"
-//           color="primary"
-//           sx={{ mt: 4 }}
-//           onClick={handleLogout}
-//         >
-//           Logout
-//         </Button>
-//       </Box>
-//     </Container>
-//   );
-// }
 import React, { useEffect, useState } from "react";
-import { Container, Typography, Box, Button } from "@mui/material";
+import {
+  Container,
+  Typography,
+  Box,
+  Button,
+  Paper,
+} from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import * as jwt_decode from 'jwt-decode';
-import CreateBookingModal from "../components/CreateBookingModal"; // 👈 Add this
+import * as jwt_decode from "jwt-decode";
+import CreateBookingModal from "../components/CreateBookingModal";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [role, setRole] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false); // 👈 State for modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -95,7 +38,7 @@ export default function Dashboard() {
   };
 
   const handleBookingCreated = () => {
-    // Optionally refresh bookings or show a toast
+    setIsModalOpen(false);
     console.log("Booking created successfully");
   };
 
@@ -104,7 +47,9 @@ export default function Dashboard() {
       case "booker":
         return (
           <>
-            <Typography>You are logged in as a <strong>Booker</strong>.</Typography>
+            <Typography variant="h6" sx={{ mt: 2 }}>
+              You are logged in as a <strong>Booker</strong>.
+            </Typography>
             <Button
               variant="contained"
               color="success"
@@ -116,21 +61,35 @@ export default function Dashboard() {
           </>
         );
       case "driver":
-        return <Typography>You are logged in as a <strong>Driver</strong>.</Typography>;
+        return (
+          <Typography variant="h6" sx={{ mt: 2 }}>
+            You are logged in as a <strong>Driver</strong>.
+          </Typography>
+        );
       case "admin":
-        return <Typography>You are logged in as an <strong>Admin</strong>.</Typography>;
+        return (
+          <Typography variant="h6" sx={{ mt: 2 }}>
+            You are logged in as an <strong>Admin</strong>.
+          </Typography>
+        );
       default:
-        return <Typography>Unknown role. Please contact support.</Typography>;
+        return (
+          <Typography variant="h6" sx={{ mt: 2 }}>
+            Unknown role. Please contact support.
+          </Typography>
+        );
     }
   };
 
   return (
-    <Container maxWidth="md">
-      <Box sx={{ mt: 8, textAlign: "center" }}>
+    <Container maxWidth="sm">
+      <Paper elevation={3} sx={{ p: 4, mt: 8, textAlign: "center" }}>
         <Typography variant="h4" gutterBottom>
           Welcome to the Dashboard
         </Typography>
+
         {renderDashboardContent()}
+
         <Button
           variant="outlined"
           color="primary"
@@ -139,13 +98,12 @@ export default function Dashboard() {
         >
           Logout
         </Button>
-      </Box>
+      </Paper>
 
-      {/* Booking modal (only shown if isModalOpen is true) */}
       <CreateBookingModal
-        isOpen={isModalOpen}
+        open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onBookingCreated={handleBookingCreated}
+        onSubmit={handleBookingCreated}
       />
     </Container>
   );

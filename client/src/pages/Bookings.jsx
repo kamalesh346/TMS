@@ -8,14 +8,14 @@ import {
   CircularProgress,
   Alert,
 } from "@mui/material";
-import CreateBookingModal from "../components/CreateBookingModal"; // 👈 Import modal
+import CreateBookingModal from "../components/CreateBookingModal";
 
 export default function Bookings() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cancelingId, setCancelingId] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false); // 👈 Modal open state
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -25,7 +25,6 @@ export default function Bookings() {
       const response = await axios.get("/api/bookings/my-bookings", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log("Fetched bookings:", response.data.bookings);
       setBookings(response.data.bookings || []);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to fetch bookings");
@@ -47,7 +46,7 @@ export default function Bookings() {
       await axios.delete(`/api/bookings/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      fetchBookings(); // Refresh after cancel
+      fetchBookings();
     } catch (err) {
       setError(err.response?.data?.message || "Failed to cancel booking");
     } finally {
@@ -57,27 +56,40 @@ export default function Bookings() {
 
   const handleBookingCreated = () => {
     setIsModalOpen(false);
-    fetchBookings(); // Refresh after new booking
+    fetchBookings();
   };
-
-  if (loading) return <CircularProgress />;
 
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-        <Typography variant="h5">My Bookings</Typography>
-        <Button variant="contained" color="success" onClick={() => setIsModalOpen(true)}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography variant="h5" fontWeight="bold">
+          My Bookings
+        </Typography>
+        <Button
+          variant="contained"
+          color="success"
+          onClick={() => setIsModalOpen(true)}
+        >
           Create Booking
         </Button>
       </Box>
 
-      {error && (
+      {loading ? (
+        <Box display="flex" justifyContent="center" mt={4}>
+          <CircularProgress />
+        </Box>
+      ) : error ? (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
-      )}
-
-      {bookings.length === 0 ? (
+      ) : bookings.length === 0 ? (
         <Typography>No bookings found.</Typography>
       ) : (
         bookings.map((booking) => (
@@ -87,7 +99,8 @@ export default function Bookings() {
               mb: 2,
               p: 2,
               border: "1px solid #ccc",
-              borderRadius: 1,
+              borderRadius: 2,
+              boxShadow: 1,
             }}
           >
             <Typography><strong>ID:</strong> {booking.id}</Typography>
@@ -96,16 +109,25 @@ export default function Bookings() {
             <Typography><strong>Delivery:</strong> {booking.delivery}</Typography>
             <Typography><strong>Weight:</strong> {booking.weight} kg</Typography>
             <Typography><strong>Status:</strong> {booking.status}</Typography>
+            
+            <Typography><strong>Vehicle Type:</strong> {booking.vehicleType}</Typography>
+            <Typography><strong>Required Time:</strong> {new Date(booking.requiredTime).toLocaleString()}</Typography>
+            <Typography><strong>Loading Time:</strong> {booking.estimatedLoadingTime} mins</Typography>
+            <Typography><strong>Unloading Time:</strong> {booking.estimatedUnloadingTime} mins</Typography>
+            <Typography><strong>Urgency:</strong> {booking.urgencyLevel}</Typography>
+
 
             {booking.status === "pending" && (
               <Button
                 variant="outlined"
                 color="error"
-                sx={{ mt: 1 }}
+                sx={{ mt: 2 }}
                 disabled={cancelingId === booking.id}
                 onClick={() => cancelBooking(booking.id)}
               >
-                {cancelingId === booking.id ? "Cancelling..." : "Cancel Booking"}
+                {cancelingId === booking.id
+                  ? "Cancelling..."
+                  : "Cancel Booking"}
               </Button>
             )}
           </Box>
@@ -114,9 +136,9 @@ export default function Bookings() {
 
       {/* Booking Modal */}
       <CreateBookingModal
-        isOpen={isModalOpen}
+        open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onBookingCreated={handleBookingCreated}
+        onSubmit={handleBookingCreated}
       />
     </Container>
   );

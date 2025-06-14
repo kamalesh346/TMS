@@ -3,37 +3,43 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "sqlite" // ⚠️ Consider switching to PostgreSQL if scaling or concurrency becomes an issue
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   name      String
-  email     String   @unique
+  email     String    @unique
   password  String
   role      String
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
-  bookings  Booking[] // 👈 New relation to Booking model
-}
-
-enum BookingStatus {
-  pending
-  cancelled
-  completed
+  bookings  Booking[]
 }
 
 model Booking {
-  id          Int      @id @default(autoincrement())
-  userId      Int
-  purpose     String
-  pickup      String
-  delivery    String
-  itemDesc    String
-  weight      Float
-  status      String   @default("pending")
-  createdAt   DateTime @default(now())
+  id                Int      @id @default(autoincrement())
+  userId            Int
+  purpose           String
+  pickup            String   // Predefined location
+  delivery          String   // Predefined location
+  itemDesc          String
+  weight            Float    // Always in KG
+  vehicleType       String  @default("Unknown")
+  vehicleLength     Float   @default(0)
+  vehicleBreadth    Float   @default(0)
+  vehicleHeight     Float   @default(0)
+  requiredStartTime DateTime @default(now())
+  requiredEndTime   DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id])
+  status            String   @default("pending")
+  createdAt         DateTime @default(now())
+
+  user              User     @relation(fields: [userId], references: [id])
+}
+
+model Location {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
 }
