@@ -3,6 +3,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const authRoutes = require('./routes/authRoutes'); // Correct path for the routes file
 const bookingRoutes = require('./routes/bookingRoutes');
+const dropdownRoutes = require('./routes/dropdownRoutes');
 
 dotenv.config();
 
@@ -17,6 +18,9 @@ app.use('/api/auth', authRoutes); // This should match the route in the request
 
 // Use the booking routes
 app.use('/api/bookings', bookingRoutes);
+
+// for locations and vehicleTypes dropdown
+app.use('/api/dropdowns', dropdownRoutes);
 
 // Server setup
 const PORT = process.env.PORT || 4000;

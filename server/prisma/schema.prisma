@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite" // ⚠️ Consider switching to PostgreSQL if scaling or concurrency becomes an issue
+  provider = "sqlite" // ⚠️ Consider switching to PostgreSQL for production
   url      = env("DATABASE_URL")
 }
 
@@ -22,14 +22,14 @@ model Booking {
   id                Int      @id @default(autoincrement())
   userId            Int
   purpose           String
-  pickup            String   // Predefined location
-  delivery          String   // Predefined location
+  pickup            String   // Predefined location name
+  delivery          String   // Predefined location name
   itemDesc          String
   weight            Float    // Always in KG
-  vehicleType       String  @default("Unknown")
-  vehicleLength     Float   @default(0)
-  vehicleBreadth    Float   @default(0)
-  vehicleHeight     Float   @default(0)
+  vehicleType       String   @default("Unknown") // Still storing type name directly
+  vehicleLength     Float    @default(0)
+  vehicleBreadth    Float    @default(0)
+  vehicleHeight     Float    @default(0)
   requiredStartTime DateTime @default(now())
   requiredEndTime   DateTime @default(now())
 
@@ -42,4 +42,17 @@ model Booking {
 model Location {
   id    Int    @id @default(autoincrement())
   name  String @unique
+}
+
+model VehicleType {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  vehicles Vehicle[]
+}
+
+model Vehicle {
+  id            Int          @id @default(autoincrement())
+  number        String       @unique   // Vehicle registration number
+  vehicleTypeId Int
+  vehicleType   VehicleType  @relation(fields: [vehicleTypeId], references: [id])
 }
