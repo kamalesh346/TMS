@@ -31,7 +31,7 @@ export default function CreateBookingModal({ open, onClose, onSubmit }) {
     delivery: "",
     itemDesc: "",
     weight: "",
-    vehicleType: "",
+    vehicleTypeId: "",
     vehicleLength: "",
     vehicleBreadth: "",
     vehicleHeight: "",
@@ -86,7 +86,7 @@ export default function CreateBookingModal({ open, onClose, onSubmit }) {
       delivery: form.delivery,
       itemDesc: form.itemDesc,
       weight: Number(form.weight),
-      vehicleType: form.vehicleType,
+      vehicleTypeId: Number(form.vehicleTypeId),
       vehicleLength: Number(form.vehicleLength),
       vehicleBreadth: Number(form.vehicleBreadth),
       vehicleHeight: Number(form.vehicleHeight),
@@ -118,7 +118,7 @@ export default function CreateBookingModal({ open, onClose, onSubmit }) {
       delivery: "",
       itemDesc: "",
       weight: "",
-      vehicleType: "",
+      vehicleTypeId: "",
       vehicleLength: "",
       vehicleBreadth: "",
       vehicleHeight: "",
@@ -143,7 +143,7 @@ export default function CreateBookingModal({ open, onClose, onSubmit }) {
         )}
 
         <Grid container spacing={2}>
-          <Grid xs={12}>
+          <Grid item xs={12}>
             <TextField
               fullWidth
               label="Purpose"
@@ -153,7 +153,7 @@ export default function CreateBookingModal({ open, onClose, onSubmit }) {
             />
           </Grid>
 
-          <Grid xs={6}>
+          <Grid item xs={6}>
             <TextField
               select
               fullWidth
@@ -161,17 +161,16 @@ export default function CreateBookingModal({ open, onClose, onSubmit }) {
               name="pickup"
               value={form.pickup}
               onChange={handleChange}
-              sx={{ minWidth: 200 }}
             >
               {locations.map((loc) => (
-                <MenuItem key={loc.name} value={loc.name}>
+                <MenuItem key={loc.id} value={loc.name}>
                   {loc.name}
                 </MenuItem>
               ))}
             </TextField>
           </Grid>
 
-          <Grid xs={6}>
+          <Grid item xs={6}>
             <TextField
               select
               fullWidth
@@ -179,17 +178,16 @@ export default function CreateBookingModal({ open, onClose, onSubmit }) {
               name="delivery"
               value={form.delivery}
               onChange={handleChange}
-              sx={{ minWidth: 200 }}
             >
               {locations.map((loc) => (
-                <MenuItem key={loc.name} value={loc.name}>
+                <MenuItem key={loc.id} value={loc.name}>
                   {loc.name}
                 </MenuItem>
               ))}
             </TextField>
           </Grid>
 
-          <Grid xs={12}>
+          <Grid item xs={12}>
             <TextField
               fullWidth
               label="Item Description"
@@ -199,7 +197,7 @@ export default function CreateBookingModal({ open, onClose, onSubmit }) {
             />
           </Grid>
 
-          <Grid xs={6}>
+          <Grid item xs={6}>
             <TextField
               fullWidth
               label="Weight (kg)"
@@ -210,25 +208,24 @@ export default function CreateBookingModal({ open, onClose, onSubmit }) {
             />
           </Grid>
 
-          <Grid xs={6}>
+          <Grid item xs={6}>
             <TextField
               select
               fullWidth
               label="Vehicle Type"
-              name="vehicleType"
-              value={form.vehicleType}
+              name="vehicleTypeId"
+              value={form.vehicleTypeId}
               onChange={handleChange}
-              sx={{ minWidth: 200 }}
             >
               {vehicleTypes.map((v) => (
-                <MenuItem key={v.name} value={v.name}>
-                  {v.name}
+                <MenuItem key={v.id} value={v.id}>
+                  {v.type}
                 </MenuItem>
               ))}
             </TextField>
           </Grid>
 
-          <Grid xs={4}>
+          <Grid item xs={4}>
             <TextField
               fullWidth
               label="Length (m)"
@@ -239,7 +236,7 @@ export default function CreateBookingModal({ open, onClose, onSubmit }) {
             />
           </Grid>
 
-          <Grid xs={4}>
+          <Grid item xs={4}>
             <TextField
               fullWidth
               label="Breadth (m)"
@@ -250,7 +247,7 @@ export default function CreateBookingModal({ open, onClose, onSubmit }) {
             />
           </Grid>
 
-          <Grid xs={4}>
+          <Grid item xs={4}>
             <TextField
               fullWidth
               label="Height (m)"
@@ -261,7 +258,7 @@ export default function CreateBookingModal({ open, onClose, onSubmit }) {
             />
           </Grid>
 
-          <Grid xs={6}>
+          <Grid item xs={6}>
             <TextField
               fullWidth
               label="Start Time"
@@ -273,7 +270,7 @@ export default function CreateBookingModal({ open, onClose, onSubmit }) {
             />
           </Grid>
 
-          <Grid xs={6}>
+          <Grid item xs={6}>
             <TextField
               fullWidth
               label="End Time"

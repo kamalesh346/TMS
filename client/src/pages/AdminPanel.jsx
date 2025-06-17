@@ -135,13 +135,13 @@ export default function AdminPanel() {
         >
           <MenuItem value="">All</MenuItem>
           {vehicleTypes.map((v) => (
-            <MenuItem key={v.name} value={v.name}>{v.name}</MenuItem>
+            <MenuItem key={v.id} value={v.type}>{v.type}</MenuItem>
           ))}
         </TextField>
 
         <TextField
           type="date"
-          label="Start Date"
+          label="Date"
           InputLabelProps={{ shrink: true }}
           size="small"
           value={filterStartDate}
@@ -213,7 +213,7 @@ export default function AdminPanel() {
               <Typography><strong>Delivery:</strong> {selectedBooking.delivery}</Typography>
               <Typography><strong>Item Description:</strong> {selectedBooking.itemDesc}</Typography>
               <Typography><strong>Weight:</strong> {selectedBooking.weight} kg</Typography>
-              <Typography><strong>Vehicle Type:</strong> {selectedBooking.vehicleType}</Typography>
+              <Typography><strong>Vehicle Type:</strong> {selectedBooking.vehicleType?.type}</Typography>
               <Typography><strong>Status:</strong> {selectedBooking.status}</Typography>
               <Typography><strong>Created:</strong> {new Date(selectedBooking.createdAt).toLocaleString()}</Typography>
 

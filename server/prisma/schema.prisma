@@ -8,51 +8,61 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   name      String
-  email     String    @unique
+  email     String   @unique
   password  String
   role      String
-  createdAt DateTime  @default(now())
+  createdAt DateTime @default(now())
 
-  bookings  Booking[]
+  bookings Booking[]
 }
 
 model Booking {
-  id                Int      @id @default(autoincrement())
-  userId            Int
-  purpose           String
-  pickup            String   // Predefined location name
-  delivery          String   // Predefined location name
-  itemDesc          String
-  weight            Float    // Always in KG
-  vehicleType       String   @default("Unknown") // Still storing type name directly
-  vehicleLength     Float    @default(0)
-  vehicleBreadth    Float    @default(0)
-  vehicleHeight     Float    @default(0)
+  id       Int    @id @default(autoincrement())
+  userId   Int
+  purpose  String
+  pickup   String // Predefined location name
+  delivery String // Predefined location name
+  itemDesc String
+  weight   Float // Always in KG
+
+  vehicleTypeId Int // Foreign key to VehicleType
+  vehicleType   VehicleType @relation(fields: [vehicleTypeId], references: [id])
+
+  vehicleLength  Float @default(0)
+  vehicleBreadth Float @default(0)
+  vehicleHeight  Float @default(0)
+
   requiredStartTime DateTime @default(now())
   requiredEndTime   DateTime @default(now())
-
   status            String   @default("pending")
   createdAt         DateTime @default(now())
 
-  user              User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 }
 
 model Location {
-  id    Int    @id @default(autoincrement())
-  name  String @unique
+  id   Int    @id @default(autoincrement())
+  name String @unique
 }
 
 model VehicleType {
-  id       Int       @id @default(autoincrement())
-  name     String    @unique
+  id        Int      @id @default(autoincrement())
+  type      String   @unique
+  length    Float
+  breadth   Float
+  height    Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings Booking[]
   vehicles Vehicle[]
 }
 
 model Vehicle {
-  id            Int          @id @default(autoincrement())
-  number        String       @unique   // Vehicle registration number
+  id            Int         @id @default(autoincrement())
+  number        String      @unique // Vehicle registration number
   vehicleTypeId Int
-  vehicleType   VehicleType  @relation(fields: [vehicleTypeId], references: [id])
+  vehicleType   VehicleType @relation(fields: [vehicleTypeId], references: [id])
 }

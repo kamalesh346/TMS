@@ -95,7 +95,7 @@ export default function Bookings() {
         bookings.map((booking) => (
           <Box
             key={booking.id}
-            sx={{
+            sx={{display:"block",
               mb: 2,
               p: 2,
               border: "1px solid #ccc",
@@ -103,18 +103,17 @@ export default function Bookings() {
               boxShadow: 1,
             }}
           >
-            <Typography><strong>ID:</strong> {booking.id}</Typography>
-            <Typography><strong>Purpose:</strong> {booking.purpose}</Typography>
-            <Typography><strong>Pickup:</strong> {booking.pickup}</Typography>
-            <Typography><strong>Delivery:</strong> {booking.delivery}</Typography>
-            <Typography><strong>Weight:</strong> {booking.weight} kg</Typography>
-            <Typography><strong>Status:</strong> {booking.status}</Typography>
-            
-            <Typography><strong>Vehicle Type:</strong> {booking.vehicleType}</Typography>
-            <Typography><strong>Required Time:</strong> {new Date(booking.requiredTime).toLocaleString()}</Typography>
-            <Typography><strong>Loading Time:</strong> {booking.estimatedLoadingTime} mins</Typography>
-            <Typography><strong>Unloading Time:</strong> {booking.estimatedUnloadingTime} mins</Typography>
-            <Typography><strong>Urgency:</strong> {booking.urgencyLevel}</Typography>
+            <Typography><strong>Pickup:</strong> {booking.pickup?.type || booking.pickup || 'N/A'}</Typography>
+            <Typography><strong>Delivery:</strong> {booking.delivery?.type || booking.delivery || 'N/A'}</Typography>
+            <Typography><strong>Vehicle Type:</strong> {booking.vehicleType?.type || booking.vehicleType || 'N/A'}</Typography>
+            <Typography><strong>Weight:</strong> {booking.weight ? `${booking.weight} kg` : 'N/A'}</Typography>
+            <Typography><strong>Status:</strong> {booking.status || 'N/A'}</Typography>
+            <Typography>
+              <strong>Required Time:</strong>{" "}
+              {new Date(booking.requiredStartTime).toLocaleString()} to{" "}
+              {new Date(booking.requiredEndTime).toLocaleString()}
+            </Typography>
+
 
 
             {booking.status === "pending" && (

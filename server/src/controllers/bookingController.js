@@ -9,7 +9,7 @@ const createBooking = async (req, res) => {
 
   const {
     purpose, pickup, delivery, itemDesc, weight,
-    vehicleType, vehicleLength, vehicleBreadth, vehicleHeight,
+    vehicleTypeId, vehicleLength, vehicleBreadth, vehicleHeight,
     startTime, endTime,
   } = req.body;
 
@@ -20,14 +20,23 @@ const createBooking = async (req, res) => {
     return res.status(403).json({ message: 'Only BOOKER users can create bookings' });
   }
 
+  // Check required fields
   if (
-    !purpose || !pickup || !delivery || !itemDesc || !vehicleType ||
+    !purpose || !pickup || !delivery || !itemDesc ||
     !startTime || !endTime || weight === undefined
   ) {
-    console.log("⛔ Missing required fields.");
-    return res.status(400).json({ message: 'All fields are required including vehicle and timing info' });
+    console.log("⛔ Missing required fields (basic info)");
+    return res.status(400).json({ message: 'Missing basic required fields' });
   }
 
+  // Validate vehicleTypeId separately as it's an integer
+  const parsedVehicleTypeId = parseInt(vehicleTypeId);
+  if (!parsedVehicleTypeId || isNaN(parsedVehicleTypeId) || parsedVehicleTypeId <= 0) {
+    console.log("⛔ Invalid vehicleTypeId:", vehicleTypeId);
+    return res.status(400).json({ message: 'Invalid vehicle type selected' });
+  }
+
+  // Parse remaining numeric and date fields
   const parsedWeight = parseFloat(weight);
   const parsedLength = parseFloat(vehicleLength);
   const parsedBreadth = parseFloat(vehicleBreadth);
@@ -51,19 +60,26 @@ const createBooking = async (req, res) => {
         delivery,
         itemDesc,
         weight: parsedWeight,
-        vehicleType,
+        vehicleType: {
+          connect: { id: Number(vehicleTypeId) },
+        },
         vehicleLength: parsedLength || 0,
         vehicleBreadth: parsedBreadth || 0,
         vehicleHeight: parsedHeight || 0,
         requiredStartTime: parsedStart,
         requiredEndTime: parsedEnd,
-        userId,
+        user: {
+          connect: { id: userId },
+        },
+      },
+      include: {
+        vehicleType: true, // ✅ Add this to include full type info
       },
     });
-
+    
     const user = await prisma.user.findUnique({ where: { id: userId } });
 
-    // Email to user
+    // Send confirmation email to booker
     if (user?.email) {
       await sendMail({
         to: user.email,
@@ -77,7 +93,6 @@ const createBooking = async (req, res) => {
             <li><strong>Purpose:</strong> ${purpose}</li>
             <li><strong>Pickup:</strong> ${pickup}</li>
             <li><strong>Delivery:</strong> ${delivery}</li>
-            <li><strong>Vehicle:</strong> ${vehicleType}</li>
             <li><strong>Start Time:</strong> ${parsedStart.toLocaleString()}</li>
             <li><strong>End Time:</strong> ${parsedEnd.toLocaleString()}</li>
           </ul>
@@ -85,7 +100,7 @@ const createBooking = async (req, res) => {
         `,
       });
 
-      // Email to Admin
+      // Send notification email to admin
       await sendMail({
         to: process.env.ADMIN_EMAIL,
         subject: 'New Booking Submitted',
@@ -95,7 +110,7 @@ const createBooking = async (req, res) => {
           <ul>
             <li><strong>Pickup:</strong> ${pickup}</li>
             <li><strong>Delivery:</strong> ${delivery}</li>
-            <li><strong>Vehicle Type:</strong> ${vehicleType}</li>
+            <li><strong>Vehicle Type:</strong> ${newBooking.vehicleType?.type || 'Unknown'}</li>
             <li><strong>Start:</strong> ${parsedStart.toLocaleString()}</li>
             <li><strong>End:</strong> ${parsedEnd.toLocaleString()}</li>
           </ul>
@@ -114,6 +129,7 @@ const createBooking = async (req, res) => {
   }
 };
 
+
 // ✅ Get bookings for logged-in user (Booker)
 const getUserBookings = async (req, res) => {
   const userId = req.user.userId;
@@ -122,6 +138,9 @@ const getUserBookings = async (req, res) => {
     const bookings = await prisma.booking.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
+      include: {
+        vehicleType: true,
+      },
     });
 
     res.json({ bookings });
@@ -131,16 +150,24 @@ const getUserBookings = async (req, res) => {
   }
 };
 
+// ✅ Admin view: get all bookings with optional filters
 const getAllBookings = async (req, res) => {
   if (req.user.role.toLowerCase() !== 'admin') {
     return res.status(403).json({ message: 'Only ADMIN can view all bookings' });
   }
 
-  const { status, vehicleType, startDate, endDate } = req.query;
+  const { status, vehicleType, vehicleTypeId, startDate, endDate } = req.query;
   const filters = {};
 
   if (status) filters.status = status;
-  if (vehicleType) filters.vehicleType = vehicleType;
+  if (vehicleType) {
+    filters.vehicleType = {
+      type: vehicleType,
+    };
+  }
+  if (vehicleTypeId) {
+    whereClause.vehicleTypeId = parseInt(vehicleTypeId);
+  }
 
   const parsedStart = startDate ? new Date(startDate) : null;
   const parsedEnd = endDate ? new Date(endDate) : null;
@@ -159,7 +186,8 @@ const getAllBookings = async (req, res) => {
     const bookings = await prisma.booking.findMany({
       where: filters,
       include: {
-        user: { select: { name: true, email: true} },
+        user: { select: { name: true, email: true } },
+        vehicleType: true,
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -170,7 +198,6 @@ const getAllBookings = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch all bookings', error: error.message });
   }
 };
-
 
 // ✅ Cancel a booking (Booker only, if status is pending)
 const cancelBooking = async (req, res) => {
@@ -188,9 +215,11 @@ const cancelBooking = async (req, res) => {
       return res.status(400).json({ message: 'Only pending bookings can be cancelled' });
     }
 
-    await prisma.booking.delete({ where: { id: bookingId } });
+    const cancelledBooking = await prisma.booking.update({ where: { id: bookingId },
+             data: {status: 'cancelled'},
+     });
 
-    res.json({ message: 'Booking cancelled successfully' });
+    res.json({ message: 'Booking cancelled successfully', booking: cancelledBooking });
   } catch (error) {
     console.error('Cancel booking error:', error);
     res.status(500).json({ message: 'Failed to cancel booking' });
