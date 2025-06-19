@@ -4,6 +4,8 @@ const dotenv = require('dotenv');
 const authRoutes = require('./routes/authRoutes'); // Correct path for the routes file
 const bookingRoutes = require('./routes/bookingRoutes');
 const dropdownRoutes = require('./routes/dropdownRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+
 
 dotenv.config();
 
@@ -19,8 +21,11 @@ app.use('/api/auth', authRoutes); // This should match the route in the request
 // Use the booking routes
 app.use('/api/bookings', bookingRoutes);
 
-// for locations and vehicleTypes dropdown
+// for GETSs
 app.use('/api/dropdowns', dropdownRoutes);
+
+// for POSTS
+app.use('/api/admin', adminRoutes);
 
 // Server setup
 const PORT = process.env.PORT || 4000;
