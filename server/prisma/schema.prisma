@@ -3,51 +3,72 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql" 
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
 model User {
+
   id        Int      @id @default(autoincrement())
   name      String
   email     String   @unique
   password  String
-  role      String
+  role      String // "admin", "driver", "booker"
   createdAt DateTime @default(now())
 
   bookings Booking[]
+  trips    Trip[]    @relation("DriverTrips") // Driver's assigned trips
+
+  driverMapping DriverVehicle[]
+
+  @@map("user")
 }
 
 model Booking {
-  id       Int    @id @default(autoincrement())
-  userId   Int
-  purpose  String
-  pickup   String // Predefined location name
-  delivery String // Predefined location name
-  itemDesc String
-  weight   Float // Always in KG
+  id              Int          @id @default(autoincrement())
+  userId          Int
+  purpose         String
+  pickup          String
+  delivery        String
+  itemDesc        String
+  weight          Float
+  vehicleTypeId   Int
 
-  vehicleTypeId Int // Foreign key to VehicleType
-  vehicleType   VehicleType @relation(fields: [vehicleTypeId], references: [id])
+  vehicleType     VehicleType @relation(fields: [vehicleTypeId], references: [id])
 
-  vehicleLength  Float @default(0)
-  vehicleBreadth Float @default(0)
-  vehicleHeight  Float @default(0)
+  vehicleLength   Float       @default(0)
+  vehicleBreadth  Float       @default(0)
+  vehicleHeight   Float       @default(0)
 
-  requiredStartTime DateTime @default(now())
-  requiredEndTime   DateTime @default(now())
-  status            String   @default("pending")
-  createdAt         DateTime @default(now())
+  requiredStartTime DateTime  @default(now())
+  requiredEndTime   DateTime  @default(now())
+  status            String    @default("pending")
+  createdAt         DateTime  @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  tripId           Int?       // Optional — only if assigned to a trip
+  trip             Trip?      @relation(fields: [tripId], references: [id], onDelete: SetNull)
+
+  user             User       @relation(fields: [userId], references: [id])
 }
 
-model Location {
-  id   Int    @id @default(autoincrement())
-  name String @unique
+
+model Trip {
+  id         Int       @id @default(autoincrement())
+  driverId   Int
+  vehicleId  Int
+  startTime  DateTime
+  endTime    DateTime
+  status     String    @default("scheduled") // scheduled, ongoing, completed
+  createdAt  DateTime  @default(now())
+
+  driver     User      @relation("DriverTrips", fields: [driverId], references: [id])
+  vehicle    Vehicle   @relation(fields: [vehicleId], references: [id])
+  bookings   Booking[] // One trip can have many bookings
 }
+
 
 model VehicleType {
+
   id        Int      @id @default(autoincrement())
   type      String   @unique
   length    Float
@@ -58,11 +79,37 @@ model VehicleType {
 
   bookings Booking[]
   vehicles Vehicle[]
+
+  @@map("vehicletype")
 }
 
 model Vehicle {
-  id            Int         @id @default(autoincrement())
-  number        String      @unique // Vehicle registration number
+
+  id            Int    @id @default(autoincrement())
+  number        String @unique
   vehicleTypeId Int
-  vehicleType   VehicleType @relation(fields: [vehicleTypeId], references: [id])
+
+  vehicleType VehicleType    @relation(fields: [vehicleTypeId], references: [id])
+  trips       Trip[]
+  mapping     DriverVehicle? @relation("VehicleToDriverMapping")
+
+  @@map("vehicle")
+}
+
+model Location {
+
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  @@map("location")
+}
+
+model DriverVehicle {
+  id         Int      @id @default(autoincrement())
+  driverId   Int
+  vehicleId  Int      @unique
+  assignedAt DateTime @default(now())
+
+  driver  User    @relation(fields: [driverId], references: [id])
+  vehicle Vehicle @relation("VehicleToDriverMapping", fields: [vehicleId], references: [id])
 }

@@ -8,7 +8,8 @@ import Navbar from "./components/Navbar";
 import Bookings from "./pages/Bookings";
 import AdminPanel from "./pages/AdminPanel";
 import DriverTrips from "./pages/DriverTrips";
-import ProtectedRoute from "./components/ProtectedRoute"; // ⬅️ Make sure it's imported
+import ProtectedRoute from "./components/ProtectedRoute"; 
+import TripAssignmentPage from "./pages/TripAssignmentPage";
 
 function Layout() {
   const token = localStorage.getItem("token");
@@ -51,14 +52,6 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        {/* <Route
-          path="/create-booking"
-          element={
-            <ProtectedRoute allowedRoles={["booker"]}>
-              <CreateBooking />
-            </ProtectedRoute>
-          }
-        /> */}
 
         {/* Admin-only Route */}
         <Route
@@ -69,6 +62,18 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+      {/* Assign-trip */}
+      <Route
+        path="/assign-trip"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <TripAssignmentPage />
+          </ProtectedRoute>
+        }
+      />
+
+          
 
         {/* Driver-only Route */}
         <Route

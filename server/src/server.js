@@ -1,34 +1,39 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const authRoutes = require('./routes/authRoutes'); // Correct path for the routes file
+dotenv.config();
+
+const authRoutes = require('./routes/authRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const dropdownRoutes = require('./routes/dropdownRoutes');
 const adminRoutes = require('./routes/adminRoutes');
-
-
-dotenv.config();
-
+const driverVehicleRoutes = require('./routes/driverVehicleRoutes');
+const driverRoutes = require('./routes/driverRoutes');
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// Routes
-app.use('/api/auth', authRoutes); // This should match the route in the request
+// Health check
+app.get('/', (req, res) => {
+  res.send('🚚 Transport Management System API is running...');
+});
 
-// Use the booking routes
+// Route mounting
+app.use('/api/auth', authRoutes);
 app.use('/api/bookings', bookingRoutes);
-
-// for GETSs
 app.use('/api/dropdowns', dropdownRoutes);
-
-// for POSTS
 app.use('/api/admin', adminRoutes);
+app.use('/api/driver-vehicle', driverVehicleRoutes);
+app.use('/api/driver',driverRoutes);
+// Optional 404 handler
+app.use((req, res) => {
+  res.status(404).json({ message: 'Route not found' });
+});
 
-// Server setup
+// Server start
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
 });

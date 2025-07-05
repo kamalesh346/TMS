@@ -29,14 +29,14 @@ const createBooking = async (req, res) => {
     return res.status(400).json({ message: 'Missing basic required fields' });
   }
 
-  // Validate vehicleTypeId separately as it's an integer
+  // Validate vehicleTypeId
   const parsedVehicleTypeId = parseInt(vehicleTypeId);
   if (!parsedVehicleTypeId || isNaN(parsedVehicleTypeId) || parsedVehicleTypeId <= 0) {
     console.log("⛔ Invalid vehicleTypeId:", vehicleTypeId);
     return res.status(400).json({ message: 'Invalid vehicle type selected' });
   }
 
-  // Parse remaining numeric and date fields
+  // Parse remaining fields
   const parsedWeight = parseFloat(weight);
   const parsedLength = parseFloat(vehicleLength);
   const parsedBreadth = parseFloat(vehicleBreadth);
@@ -61,7 +61,7 @@ const createBooking = async (req, res) => {
         itemDesc,
         weight: parsedWeight,
         vehicleType: {
-          connect: { id: Number(vehicleTypeId) },
+          connect: { id: parsedVehicleTypeId },
         },
         vehicleLength: parsedLength || 0,
         vehicleBreadth: parsedBreadth || 0,
@@ -73,49 +73,51 @@ const createBooking = async (req, res) => {
         },
       },
       include: {
-        vehicleType: true, // ✅ Add this to include full type info
+        vehicleType: true,
       },
     });
-    
+
     const user = await prisma.user.findUnique({ where: { id: userId } });
 
-    // Send confirmation email to booker
     if (user?.email) {
-      await sendMail({
-        to: user.email,
-        subject: 'Booking Confirmation',
-        html: `
-          <h2>Booking Created Successfully</h2>
-          <p>Hello ${user.name || 'User'},</p>
-          <p>Your booking has been created with the following details:</p>
-          <ul>
-            <li><strong>ID:</strong> ${newBooking.id}</li>
-            <li><strong>Purpose:</strong> ${purpose}</li>
-            <li><strong>Pickup:</strong> ${pickup}</li>
-            <li><strong>Delivery:</strong> ${delivery}</li>
-            <li><strong>Start Time:</strong> ${parsedStart.toLocaleString()}</li>
-            <li><strong>End Time:</strong> ${parsedEnd.toLocaleString()}</li>
-          </ul>
-          <p>Status: <strong>${newBooking.status}</strong></p>
-        `,
-      });
+      try {
+        await sendMail({
+          to: user.email,
+          subject: 'Booking Confirmation',
+          html: `
+            <h2>Booking Created Successfully</h2>
+            <p>Hello ${user.name || 'User'},</p>
+            <p>Your booking has been created with the following details:</p>
+            <ul>
+              <li><strong>ID:</strong> ${newBooking.id}</li>
+              <li><strong>Purpose:</strong> ${purpose}</li>
+              <li><strong>Pickup:</strong> ${pickup}</li>
+              <li><strong>Delivery:</strong> ${delivery}</li>
+              <li><strong>Start Time:</strong> ${parsedStart.toLocaleString()}</li>
+              <li><strong>End Time:</strong> ${parsedEnd.toLocaleString()}</li>
+            </ul>
+            <p>Status: <strong>${newBooking.status}</strong></p>
+          `,
+        });
 
-      // Send notification email to admin
-      await sendMail({
-        to: process.env.ADMIN_EMAIL,
-        subject: 'New Booking Submitted',
-        html: `
-          <h2>New Booking Request</h2>
-          <p>User <strong>${user.name}</strong> has submitted a booking.</p>
-          <ul>
-            <li><strong>Pickup:</strong> ${pickup}</li>
-            <li><strong>Delivery:</strong> ${delivery}</li>
-            <li><strong>Vehicle Type:</strong> ${newBooking.vehicleType?.type || 'Unknown'}</li>
-            <li><strong>Start:</strong> ${parsedStart.toLocaleString()}</li>
-            <li><strong>End:</strong> ${parsedEnd.toLocaleString()}</li>
-          </ul>
-        `,
-      });
+        await sendMail({
+          to: process.env.ADMIN_EMAIL,
+          subject: 'New Booking Submitted',
+          html: `
+            <h2>New Booking Request</h2>
+            <p>User <strong>${user.name}</strong> has submitted a booking.</p>
+            <ul>
+              <li><strong>Pickup:</strong> ${pickup}</li>
+              <li><strong>Delivery:</strong> ${delivery}</li>
+              <li><strong>Vehicle Type:</strong> ${newBooking.vehicleType?.type || 'Unknown'}</li>
+              <li><strong>Start:</strong> ${parsedStart.toLocaleString()}</li>
+              <li><strong>End:</strong> ${parsedEnd.toLocaleString()}</li>
+            </ul>
+          `,
+        });
+      } catch (emailErr) {
+        console.warn("📧 Email sending failed:", emailErr.message);
+      }
     }
 
     return res.status(201).json({
@@ -150,6 +152,7 @@ const getUserBookings = async (req, res) => {
   }
 };
 
+
 // ✅ Admin view: get all bookings with optional filters
 const getAllBookings = async (req, res) => {
   if (req.user.role.toLowerCase() !== 'admin') {
@@ -159,14 +162,14 @@ const getAllBookings = async (req, res) => {
   const { status, vehicleType, vehicleTypeId, startDate, endDate } = req.query;
   const filters = {};
 
-  if (status) filters.status = status;
+  if (status) filters.status = status.toLowerCase();
   if (vehicleType) {
     filters.vehicleType = {
       type: vehicleType,
     };
   }
   if (vehicleTypeId) {
-    whereClause.vehicleTypeId = parseInt(vehicleTypeId);
+    filters.vehicleTypeId = parseInt(vehicleTypeId);
   }
 
   const parsedStart = startDate ? new Date(startDate) : null;
@@ -199,10 +202,15 @@ const getAllBookings = async (req, res) => {
   }
 };
 
+
 // ✅ Cancel a booking (Booker only, if status is pending)
 const cancelBooking = async (req, res) => {
   const bookingId = parseInt(req.params.id);
   const userId = req.user.userId;
+
+  if (isNaN(bookingId)) {
+    return res.status(400).json({ message: 'Invalid booking ID' });
+  }
 
   try {
     const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
@@ -215,9 +223,10 @@ const cancelBooking = async (req, res) => {
       return res.status(400).json({ message: 'Only pending bookings can be cancelled' });
     }
 
-    const cancelledBooking = await prisma.booking.update({ where: { id: bookingId },
-             data: {status: 'cancelled'},
-     });
+    const cancelledBooking = await prisma.booking.update({
+      where: { id: bookingId },
+      data: { status: 'cancelled' },
+    });
 
     res.json({ message: 'Booking cancelled successfully', booking: cancelledBooking });
   } catch (error) {
@@ -225,6 +234,7 @@ const cancelBooking = async (req, res) => {
     res.status(500).json({ message: 'Failed to cancel booking' });
   }
 };
+
 
 // ✅ Admin updates booking status (approve/reject)
 const updateBookingStatus = async (req, res) => {
@@ -251,6 +261,7 @@ const updateBookingStatus = async (req, res) => {
     res.status(500).json({ message: 'Failed to update booking status' });
   }
 };
+
 
 // ✅ Export controller functions
 module.exports = {
