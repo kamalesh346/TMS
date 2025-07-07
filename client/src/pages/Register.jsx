@@ -20,7 +20,10 @@ export default function Register() {
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
-
+    
+    const payload = { name, email, password, role };
+  console.log("Registering with:", payload); 
+  
     try {
       const response = await fetch("http://localhost:4000/api/auth/register", {
         method: "POST",
@@ -29,6 +32,7 @@ export default function Register() {
         },
         body: JSON.stringify({ name, email, password, role }),
       });
+      console.log("Sending registration:", { name, email, password, role });
 
       const data = await response.json();
 

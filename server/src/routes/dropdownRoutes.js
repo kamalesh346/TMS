@@ -1,12 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
-const { getVehicleTypes, getLocations } = require('../controllers/dropdownController');
+const {
+  getVehicleTypes,
+  getLocations,
+  getDrivers,
+  getVehicles
+} = require('../controllers/dropdownController');
 
-// GET endpoints
-router.get('/vehicle-types', getVehicleTypes);
-router.get('/locations', getLocations);
+const authMiddleware = require('../middleware/authMiddleware');
 
+const requireAdmin = require('../middleware/requireAdmin'); 
+
+// GET endpoints (accessible to authenticated users only)
+router.get('/vehicle-types', authMiddleware, getVehicleTypes);
+router.get('/locations', authMiddleware, getLocations);
+router.get('/drivers', authMiddleware, requireAdmin, getDrivers);
+router.get('/vehicles', authMiddleware, requireAdmin, getVehicles);
 
 module.exports = router;
