@@ -14,7 +14,8 @@ async function main() {
     { type: 'Tempo', length: 10, breadth: 5, height: 4 },
     { type: 'Big Eicher', length: 15, breadth: 5, height: 5 },
     { type: 'Small Eicher', length: 12, breadth: 5, height: 4 },
-    { type: 'Eicher', length: 13, breadth: 4, height: 4 }
+    { type: 'Eicher', length: 13, breadth: 4, height: 4 },
+    { type: 'Veero', length: 13, breadth: 5, height: 4 }
   ];
 
   for (const data of vehicleTypes) {
@@ -75,27 +76,27 @@ async function main() {
 
   // DRIVER + VEHICLE MAPPING DATA
   const drivers = [
-    { name: "PALANISAMY", email: "palanisamy@example.com", vehicleType: "Pickup Van", vehicleNumber: "TN37EX1575" },
-    { name: "KARUPPASAMY. K. M", email: "karuppasamy@example.com", vehicleType: "Tempo", vehicleNumber: "TN37CX5649" },
-    { name: "SENTHILKUMAR DURAIPALAM", email: "senthil@example.com", vehicleType: "Eicher", vehicleNumber: "TN37DZ1347" },
-    { name: "JOHNKENNADY PANNEERSELVAM", email: "johnkennady@example.com", vehicleType: "Pickup Van", vehicleNumber: "TN37DZ0945" },
-    { name: "SIVAKUMAR RAMASAMY", email: "sivakumar@example.com", vehicleType: "Big Eicher", vehicleNumber: "TN37CV2441" },
-    { name: "SELVAM CHINNATHAMBI", email: "selvam@example.com", vehicleType: "Big Eicher", vehicleNumber: "TN37CW3794" },
-    { name: "Ravi K", email: "ravi@example.com", vehicleType: "Small Eicher", vehicleNumber: "TN37CY8187" },
-    { name: "Vijayakumar M", email: "vijayakumar@example.com", vehicleType: "Pickup Van", vehicleNumber: "TN37DZ0938" },
-    { name: "Vikas Kumar J", email: "vikas@example.com", vehicleType: "Veero", vehicleNumber: "TN37CX1111" }
+    { code: "20400", name: "PALANISAMY", vehicleType: "Pickup Van", vehicleNumber: "TN37EX1575" },
+    { code: "36318", name: "KARUPPASAMY. K. M", vehicleType: "Tempo", vehicleNumber: "TN37CX5649" },
+    { code: "20863", name: "SENTHILKUMAR DURAIPALAM", vehicleType: "Eicher", vehicleNumber: "TN37DZ1347" },
+    { code: "37581", name: "JOHNKENNADY PANNEERSELVAM", vehicleType: "Pickup Van", vehicleNumber: "TN37DZ0945" },
+    { code: "38057", name: "SIVAKUMAR RAMASAMY", vehicleType: "Big Eicher", vehicleNumber: "TN37CV2441" },
+    { code: "38267", name: "SELVAM CHINNATHAMBI", vehicleType: "Big Eicher", vehicleNumber: "TN37CW3794" },
+    { code: "38901", name: "Ravi K", vehicleType: "Small Eicher", vehicleNumber: "TN37CY8187" },
+    { code: "39309", name: "Vijayakumar M", vehicleType: "Pickup Van", vehicleNumber: "TN37DZ0938" },
+    { code: "34582", name: "Vikas Kumar J", vehicleType: "Veero", vehicleNumber: "TN37EU7166" }
   ];
 
   const hashedPassword = await bcrypt.hash("default123", 10);
 
   for (const d of drivers) {
     // Create or fetch driver
-    let driver = await prisma.user.findUnique({ where: { email: d.email } });
+    let driver = await prisma.user.findUnique({ where: { loginId: d.code } });
     if (!driver) {
       driver = await prisma.user.create({
         data: {
           name: d.name,
-          email: d.email,
+          loginId:d.code,
           password: hashedPassword,
           role: 'driver'
         }
@@ -131,6 +132,149 @@ async function main() {
       });
     }
   }
+
+  // seed to be removed //
+
+  // ADMIN user
+const existingAdmin = await prisma.user.findUnique({ where: { loginId: 'admin@gmail.com' } });
+if (!existingAdmin) {
+  await prisma.user.create({
+    data: {
+      name: 'System Admin',
+      loginId: 'admin@gmail.com',
+      email: 'admin@gmail.com',
+      password: await bcrypt.hash('admin123', 10),
+      role: 'admin'
+    }
+  });
+  console.log("👤 Admin user created");
+}
+
+// BOOKER user
+const existingBooker = await prisma.user.findUnique({ where: { loginId: 'booker1@gmail.com' } });
+if (!existingBooker) {
+  await prisma.user.create({
+    data: {
+      name: 'Booker One',
+      loginId: 'booker1@gmail.com',
+      email: 'booker1@gmail.com',
+      password: await bcrypt.hash('booker123', 10),
+      role: 'booker'
+    }
+  });
+  console.log("👤 Booker user created");
+}
+
+  // Fetch the booker and a mapped driver+vehicle
+const booker = await prisma.user.findUnique({ where: { loginId: 'booker1@gmail.com' } });
+const firstMapping = await prisma.driverVehicle.findFirst({
+  include: {
+    driver: true,
+    vehicle: true
+  }
+});
+if (booker && firstMapping) {
+  const { driver, vehicle } = firstMapping;
+
+  // Create 2 sample bookings
+  const booking1 = await prisma.booking.create({
+    data: {
+      purpose: 'Transport Raw Materials',
+      pickup: 'Warehouse A',
+      delivery: 'NAVIN ENGINEERING WORKS - 1/169A, Vellanaipatti Main road, Andakkapalayam, Coimbatore-641048',
+      itemDesc: 'Steel Rods',
+      weight: 2000,
+      requiredStartTime: new Date(),
+requiredEndTime: new Date(Date.now() + 1000 * 60 * 60 * 2), 
+
+      status: "approved",
+      vehicleTypeId: vehicle.vehicleTypeId,
+      userId: booker.id
+    }
+  });
+
+  const booking2 = await prisma.booking.create({
+    data: {
+      purpose: 'Deliver Machined Parts',
+      pickup: 'Warehouse B',
+      delivery: 'SIGMA INDUSTRIAL - OPP: Kurichi housing unit 1, Industrial Esate Post, Coimbatore-641021',
+      itemDesc: 'Finished components',
+      weight: 1200,
+      requiredStartTime: new Date(),
+requiredEndTime: new Date(Date.now() + 1000 * 60 * 60 * 2), 
+
+      status: "approved",
+      vehicleTypeId: vehicle.vehicleTypeId,
+      userId: booker.id
+    }
+  });
+
+  // Create a trip for the driver and vehicle with both bookings
+  const trip = await prisma.trip.create({
+    data: {
+      vehicleId: vehicle.id,
+      driverId: driver.id,
+      status: 'completed',
+      scheduledTime: new Date(),
+      startTime: new Date(Date.now() - 1000 * 60 * 60), // 1 hour ago
+      endTime: new Date(),
+      bookings: {
+        connect: [{ id: booking1.id }, { id: booking2.id }]
+      }
+    }
+  });
+
+  // Add status logs to booking1
+  await prisma.bookingStatusLog.createMany({
+  data: [
+    {
+      bookingId: booking1.id,
+      progress: "in_progress",
+      updatedBy: driver.id
+    },
+    {
+      bookingId: booking1.id,
+      progress: "loading",
+      updatedBy: driver.id
+    },
+    {
+      bookingId: booking1.id,
+      progress: "loaded",
+      updatedBy: driver.id
+    },
+    {
+      bookingId: booking1.id,
+      progress: "unloading",
+      updatedBy: driver.id
+    },
+    {
+      bookingId: booking1.id,
+      progress: "unloaded",
+      updatedBy: driver.id
+    },
+    {
+      bookingId: booking1.id,
+      progress: "completed",
+      updatedBy: driver.id
+    }
+    ]
+  });
+
+  // Add a fuel log
+  await prisma.fuelLog.create({
+    data: {
+      vehicleId: vehicle.id,
+      driverId: driver.id,
+      createdBy: driver.id,
+      fuelQuantity: 40,
+      odometer: 120345,
+      filledAt: new Date()
+    }
+  });
+
+  console.log("🚚 Sample bookings, trip, status logs, and fuel log created");
+}
+ 
 
   console.log("✅ Seeding complete.");
 }

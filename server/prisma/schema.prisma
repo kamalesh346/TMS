@@ -7,99 +7,153 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum TripStatus {
+  scheduled
+  ongoing
+  completed
+}
+
+enum BookingStatus {
+  pending
+  approved
+  rejected
+  cancelled
+  assigned
+}
+
+enum BookingProgress {
+  in_progress
+  loading
+  loaded
+  unloading
+  unloaded
+  completed
+}
+
 model User {
+  id             Int                 @id @default(autoincrement())
+  name           String
+  loginId        String              @unique // Unified login field (email or driver code)
+  password       String
+  role           String              // "admin", "driver", "booker"
+  createdAt      DateTime            @default(now())
 
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  role      String // "admin", "driver", "booker"
-  createdAt DateTime @default(now())
+  email          String?             @unique
 
-  bookings Booking[]
-  trips    Trip[]    @relation("DriverTrips") // Driver's assigned trips
-
-  driverMapping DriverVehicle[]
+  // Relations
+  bookings       Booking[]
+  trips          Trip[]              @relation("DriverTrips")
+  driverMapping  DriverVehicle[]
+  fuelLogs       FuelLog[]           @relation("DriverFuel")
+  createdFuelLog FuelLog[]           @relation("FuelLogCreator")
+  statusLogs     BookingStatusLog[]
 
   @@map("user")
 }
 
 model Booking {
-  id              Int          @id @default(autoincrement())
-  userId          Int
-  purpose         String
-  pickup          String
-  delivery        String
-  itemDesc        String
-  weight          Float
-  vehicleTypeId   Int
+  id                  Int              @id @default(autoincrement())
+  userId              Int
+  purpose             String
+  pickup              String
+  delivery            String
+  itemDesc            String
+  weight              Float
+  vehicleTypeId       Int
+  vehicleLength       Float            @default(0)
+  vehicleBreadth      Float            @default(0)
+  vehicleHeight       Float            @default(0)
+  requiredStartTime   DateTime         @default(now())
+  requiredEndTime     DateTime         @default(now())
+  status              BookingStatus    @default(pending)
+  tripProgress        BookingProgress?
 
-  vehicleType     VehicleType @relation(fields: [vehicleTypeId], references: [id])
+  createdAt           DateTime         @default(now())
+  tripId              Int?
+  trip                Trip?            @relation(fields: [tripId], references: [id], onDelete: SetNull)
+  user                User             @relation(fields: [userId], references: [id])
+  vehicleType         VehicleType      @relation(fields: [vehicleTypeId], references: [id])
 
-  vehicleLength   Float       @default(0)
-  vehicleBreadth  Float       @default(0)
-  vehicleHeight   Float       @default(0)
+  loadingStartTime    DateTime?
+  loadingEndTime      DateTime?
+  unloadingStartTime  DateTime?
+  unloadingEndTime    DateTime?
+  completedAt         DateTime?
 
-  requiredStartTime DateTime  @default(now())
-  requiredEndTime   DateTime  @default(now())
-  status            String    @default("pending")
-  createdAt         DateTime  @default(now())
-
-  tripId           Int?       // Optional — only if assigned to a trip
-  trip             Trip?      @relation(fields: [tripId], references: [id], onDelete: SetNull)
-
-  user             User       @relation(fields: [userId], references: [id])
+  statusLogs          BookingStatusLog[]
 }
 
+model BookingStatusLog {
+  id         Int            @id @default(autoincrement())
+  bookingId  Int
+  progress   BookingProgress
+  timestamp  DateTime       @default(now())
+  updatedBy  Int
+
+  booking    Booking        @relation(fields: [bookingId], references: [id])
+  user       User           @relation(fields: [updatedBy], references: [id])
+}
 
 model Trip {
-  id         Int       @id @default(autoincrement())
-  driverId   Int
-  vehicleId  Int
-  startTime  DateTime
-  endTime    DateTime
-  status     String    @default("scheduled") // scheduled, ongoing, completed
-  createdAt  DateTime  @default(now())
+  id             Int         @id @default(autoincrement())
+  driverId       Int
+  vehicleId      Int
+  scheduledTime  DateTime
+  startTime      DateTime?
+  endTime        DateTime?
+  status         TripStatus  @default(scheduled)
+  createdAt      DateTime    @default(now())
 
-  driver     User      @relation("DriverTrips", fields: [driverId], references: [id])
-  vehicle    Vehicle   @relation(fields: [vehicleId], references: [id])
-  bookings   Booking[] // One trip can have many bookings
+  driver         User        @relation("DriverTrips", fields: [driverId], references: [id])
+  vehicle        Vehicle     @relation(fields: [vehicleId], references: [id])
+  bookings       Booking[]
 }
 
-
 model VehicleType {
-
-  id        Int      @id @default(autoincrement())
-  type      String   @unique
+  id        Int       @id @default(autoincrement())
+  type      String    @unique
   length    Float
   breadth   Float
   height    Float
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  bookings Booking[]
-  vehicles Vehicle[]
+  bookings  Booking[]
+  vehicles  Vehicle[]
 
   @@map("vehicletype")
 }
 
 model Vehicle {
-
-  id            Int    @id @default(autoincrement())
-  number        String @unique
+  id            Int        @id @default(autoincrement())
+  number        String     @unique
   vehicleTypeId Int
 
-  vehicleType VehicleType    @relation(fields: [vehicleTypeId], references: [id])
-  trips       Trip[]
-  mapping     DriverVehicle? @relation("VehicleToDriverMapping")
+  vehicleType   VehicleType    @relation(fields: [vehicleTypeId], references: [id])
+  trips         Trip[]
+  mapping       DriverVehicle? @relation("VehicleToDriverMapping")
+  fuelLogs      FuelLog[]
 
   @@map("vehicle")
 }
 
-model Location {
+model FuelLog {
+  id           Int       @id @default(autoincrement())
+  driverId     Int
+  vehicleId    Int
+  odometer     Float
+  fuelQuantity Float
+  filledAt     DateTime  @default(now())
+  createdBy    Int
 
-  id   Int    @id @default(autoincrement())
-  name String @unique
+  driver       User      @relation("DriverFuel", fields: [driverId], references: [id])
+  vehicle      Vehicle   @relation(fields: [vehicleId], references: [id])
+  user         User      @relation("FuelLogCreator", fields: [createdBy], references: [id])
+}
+
+model Location {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
 
   @@map("location")
 }
@@ -110,6 +164,6 @@ model DriverVehicle {
   vehicleId  Int      @unique
   assignedAt DateTime @default(now())
 
-  driver  User    @relation(fields: [driverId], references: [id])
-  vehicle Vehicle @relation("VehicleToDriverMapping", fields: [vehicleId], references: [id])
+  driver     User     @relation(fields: [driverId], references: [id])
+  vehicle    Vehicle  @relation("VehicleToDriverMapping", fields: [vehicleId], references: [id])
 }

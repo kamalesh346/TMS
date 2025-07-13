@@ -1,6 +1,13 @@
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient,BookingStatus  } = require('@prisma/client');
 const prisma = new PrismaClient();
 const sendMail = require('../utils/email');
+
+
+const dayjs = require('dayjs');
+const utc = require('dayjs/plugin/utc');
+const timezone = require('dayjs/plugin/timezone');
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 // ✅ Create a new booking (Booker only)
 const createBooking = async (req, res) => {
@@ -41,8 +48,15 @@ const createBooking = async (req, res) => {
   const parsedLength = parseFloat(vehicleLength);
   const parsedBreadth = parseFloat(vehicleBreadth);
   const parsedHeight = parseFloat(vehicleHeight);
+  
+
   const parsedStart = new Date(startTime);
   const parsedEnd = new Date(endTime);
+
+
+  console.log("📥 Received times:", startTime, endTime);
+  console.log("🕓 Parsed to Date objects:", parsedStart, parsedEnd);
+
 
   if (isNaN(parsedWeight) || parsedWeight <= 0) {
     return res.status(400).json({ message: 'Weight must be a positive number' });
@@ -162,7 +176,13 @@ const getAllBookings = async (req, res) => {
   const { status, vehicleType, vehicleTypeId, startDate, endDate } = req.query;
   const filters = {};
 
-  if (status) filters.status = status.toLowerCase();
+  if (status) {
+  const validStatus = BookingStatus[status.toLowerCase()];
+  if (!validStatus) {
+    return res.status(400).json({ message: 'Invalid status filter value' });
+  }
+  filters.status = validStatus;
+  }
   if (vehicleType) {
     filters.vehicleType = {
       type: vehicleType,
