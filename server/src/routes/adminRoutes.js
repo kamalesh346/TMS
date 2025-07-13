@@ -82,7 +82,8 @@ router.post('/vehicles', authMiddleware, requireAdmin, async (req, res) => {
 // ✅ UPDATED: POST - Assign trip using mappingId
 // ==============================
 router.post('/trips/assign', authMiddleware, requireAdmin, async (req, res) => {
-  const { bookingIds, mappingId } = req.body;
+  console.log("🚀 Trip Assign Payload:", req.body);
+  const { bookingIds, mappingId, scheduledTime } = req.body;
 
   if (!Array.isArray(bookingIds) || bookingIds.length === 0) {
     return res.status(400).json({ message: "At least one booking must be selected" });
@@ -134,6 +135,7 @@ router.post('/trips/assign', authMiddleware, requireAdmin, async (req, res) => {
         vehicleId,
         startTime,
         endTime,
+        scheduledTime: new Date(scheduledTime),
         bookings: {
           connect: bookingIds.map(id => ({ id })),
         },

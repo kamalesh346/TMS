@@ -6,6 +6,7 @@ import {
 import axios from "axios";
 import dayjs from "dayjs";
 import { Link } from "react-router-dom";
+import AddUserModal from "../components/AddUserModal"; 
 
 const modalStyle = {
   position: "absolute",
@@ -56,6 +57,7 @@ export default function AdminPanel() {
     vehicleId: ""
   });
   const [driverVehicleMappings, setDriverVehicleMappings] = useState([]);
+  const [userModalOpen, setUserModalOpen] = useState(false);
 
 
   useEffect(() => {
@@ -258,6 +260,8 @@ export default function AdminPanel() {
         <Button variant="outlined" onClick={() => setVehicleModalOpen(true)}>Add Vehicle</Button>
         <Button variant="outlined" onClick={() => setDriverVehicleModalOpen(true)}>Assign Driver to Vehicle</Button>
         <Button component={Link} to="/assign-trip" variant="contained">Assign Trip</Button>
+        <Button variant="outlined" onClick={() => setUserModalOpen(true)}>Add User</Button>
+
 
       </Box>
 
@@ -428,6 +432,7 @@ export default function AdminPanel() {
           </Stack>
         </Box>
       </Modal>
+
       <Modal open={driverVehicleModalOpen} onClose={() => setDriverVehicleModalOpen(false)}>
         <Box sx={modalStyle}>
           <Typography variant="h6" gutterBottom>Assign Driver to Vehicle</Typography>
@@ -460,6 +465,17 @@ export default function AdminPanel() {
           </Stack>
         </Box>
       </Modal>
+
+      <AddUserModal
+        open={userModalOpen}
+        onClose={() => setUserModalOpen(false)}
+        onSuccess={() => {
+          alert("User registered successfully");
+          setUserModalOpen(false);
+          // optionally refresh something
+        }}
+      />
+
 
     </Container>
   );
