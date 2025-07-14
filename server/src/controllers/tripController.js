@@ -11,7 +11,7 @@ export const assignTrip = async (req, res) => {
     }
 
     // 2. Fetch mapping to get driverId and vehicleId
-    const mapping = await prisma.driverVehicleMapping.findUnique({
+    const mapping = await prisma.driverVehicle.findUnique({
       where: { id: mappingId },
     });
 
@@ -27,13 +27,23 @@ export const assignTrip = async (req, res) => {
         id: { in: bookingIds },
       },
       select: {
+        id: true,
         requiredStartTime: true,
         requiredEndTime: true,
+        status: true,
       },
     });
 
     if (bookings.length === 0) {
       return res.status(400).json({ error: 'No valid bookings found' });
+    }
+
+    const notApproved = bookings.filter(b => b.status !== 'approved');
+    if (notApproved.length > 0) {
+      return res.status(400).json({
+        error: 'Some bookings are not in approved state',
+        invalidIds: notApproved.map(b => b.id),
+      });
     }
 
     const startTime = bookings.reduce(
