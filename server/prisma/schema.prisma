@@ -21,15 +21,6 @@ enum BookingStatus {
   assigned
 }
 
-enum BookingProgress {
-  in_progress
-  loading
-  loaded
-  unloading
-  unloaded
-  completed
-}
-
 model User {
   id             Int                 @id @default(autoincrement())
   name           String
@@ -46,7 +37,6 @@ model User {
   driverMapping  DriverVehicle[]
   fuelLogs       FuelLog[]           @relation("DriverFuel")
   createdFuelLog FuelLog[]           @relation("FuelLogCreator")
-  statusLogs     BookingStatusLog[]
 
   @@map("user")
 }
@@ -66,7 +56,6 @@ model Booking {
   requiredStartTime   DateTime         @default(now())
   requiredEndTime     DateTime         @default(now())
   status              BookingStatus    @default(pending)
-  tripProgress        BookingProgress?
 
   createdAt           DateTime         @default(now())
   tripId              Int?
@@ -74,31 +63,19 @@ model Booking {
   user                User             @relation(fields: [userId], references: [id])
   vehicleType         VehicleType      @relation(fields: [vehicleTypeId], references: [id])
 
+  startedAt           DateTime?
   loadingStartTime    DateTime?
   loadingEndTime      DateTime?
   unloadingStartTime  DateTime?
   unloadingEndTime    DateTime?
   completedAt         DateTime?
 
-  statusLogs          BookingStatusLog[]
-}
-
-model BookingStatusLog {
-  id         Int            @id @default(autoincrement())
-  bookingId  Int
-  progress   BookingProgress
-  timestamp  DateTime       @default(now())
-  updatedBy  Int
-
-  booking    Booking        @relation(fields: [bookingId], references: [id])
-  user       User           @relation(fields: [updatedBy], references: [id])
 }
 
 model Trip {
   id             Int         @id @default(autoincrement())
   driverId       Int
   vehicleId      Int
-  scheduledTime  DateTime
   startTime      DateTime?
   endTime        DateTime?
   status         TripStatus  @default(scheduled)
