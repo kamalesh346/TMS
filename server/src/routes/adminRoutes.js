@@ -98,11 +98,16 @@ router.get('/trips', authMiddleware, requireAdmin, async (req, res) => {
       },
       include: {
         driver: true,
-        vehicle: true,
+        vehicle: {
+          include: {
+            vehicleType: true,
+          }
+        },
         bookings: true,
       },
       orderBy: {
-        startTime: 'desc',
+        // startTime: 'desc',
+        createdAt: 'desc',
       },
     });
 

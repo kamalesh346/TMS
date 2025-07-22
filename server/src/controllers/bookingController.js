@@ -177,17 +177,13 @@ const getAllBookings = async (req, res) => {
   const filters = {};
 
   if (status) {
-  const validStatus = BookingStatus[status.toLowerCase()];
+  const validStatus = Object.values(BookingStatus).includes(status);
   if (!validStatus) {
     return res.status(400).json({ message: 'Invalid status filter value' });
   }
-  filters.status = validStatus;
+  filters.status = status;
   }
-  if (vehicleType) {
-    filters.vehicleType = {
-      type: vehicleType,
-    };
-  }
+
   if (vehicleTypeId) {
     filters.vehicleTypeId = parseInt(vehicleTypeId);
   }
@@ -200,9 +196,9 @@ const getAllBookings = async (req, res) => {
   }
 
   if (parsedStart || parsedEnd) {
-    filters.createdAt = {};
-    if (parsedStart) filters.createdAt.gte = parsedStart;
-    if (parsedEnd) filters.createdAt.lte = parsedEnd;
+    filters.requiredStartTime = {};
+    if (parsedStart) filters.requiredStartTime.gte = parsedStart;
+    if (parsedEnd) filters.requiredStartTime.lte = parsedEnd;
   }
 
   try {
@@ -265,9 +261,13 @@ const updateBookingStatus = async (req, res) => {
     return res.status(403).json({ message: 'Only ADMIN can update status' });
   }
 
-  if (!['approved', 'rejected'].includes(status)) {
+  // if (!['approved', 'rejected'].includes(status)) {
+  //   return res.status(400).json({ message: 'Invalid status value' });
+  // }
+  if (!Object.values(BookingStatus).includes(status)) {
     return res.status(400).json({ message: 'Invalid status value' });
   }
+
 
   try {
     const updated = await prisma.booking.update({

@@ -20,7 +20,7 @@ const modalStyle = {
   p: 3,
 };
 
-const statusOptions = ["all", "pending", "approved", "rejected", "cancelled"];
+const statusOptions = ["all", "pending", "approved", "rejected", "cancelled", "ongoing", "completed"];
 
 export default function AdminPanel() {
   const [bookings, setBookings] = useState([]);
@@ -59,7 +59,6 @@ export default function AdminPanel() {
   const [driverVehicleMappings, setDriverVehicleMappings] = useState([]);
   const [userModalOpen, setUserModalOpen] = useState(false);
 
-
   useEffect(() => {
     fetchVehicleTypes();
     fetchBookings();
@@ -87,7 +86,7 @@ export default function AdminPanel() {
       const token = localStorage.getItem("token");
       const params = {};
       if (filterStatus !== "all") params.status = filterStatus;
-      if (filterVehicleType) params.vehicleType = filterVehicleType;
+      if (filterVehicleType) params.vehicleTypeId = filterVehicleType;
       if (filterStartDate) params.startDate = dayjs(filterStartDate).format("YYYY-MM-DD");
 
       const res = await axios.get("/api/bookings/all", {
@@ -240,7 +239,7 @@ export default function AdminPanel() {
         >
           <MenuItem value="">All</MenuItem>
           {vehicleTypes.map((v) => (
-            <MenuItem key={v.id} value={v.type}>{v.type}</MenuItem>
+            <MenuItem key={v.id} value={v.id}>{v.type}</MenuItem>
           ))}
         </TextField>
 
