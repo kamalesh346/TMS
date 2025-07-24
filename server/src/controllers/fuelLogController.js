@@ -3,19 +3,22 @@ const prisma = new PrismaClient();
 
 // POST /api/driver/fuel-log
 const createFuelLog = async (req, res) => {
-  const { driverId, vehicleId, odometer, fuelQuantity } = req.body;
+  const user = req.user;
 
-  if (!driverId || !vehicleId || !odometer || !fuelQuantity) {
+  const { vehicleId, odometer, fuelQuantity } = req.body.data;
+
+  if (!vehicleId || !odometer || !fuelQuantity) {
     return res.status(400).json({ message: "All fields are required." });
   }
 
   try {
     const log = await prisma.fuelLog.create({
       data: {
-        driverId: parseInt(driverId),
+        driverId: user.userId,
         vehicleId: parseInt(vehicleId),
         odometer: parseFloat(odometer),
         fuelQuantity: parseFloat(fuelQuantity),
+        createdBy: user.userId, 
       },
     });
 

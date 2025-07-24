@@ -5,33 +5,22 @@ const prisma = new PrismaClient();
 
 const { createFuelLog } = require('../controllers/fuelLogController');
 const authMiddleware = require('../middleware/authMiddleware');
+const { login, getTrips, getVehicles, getMyVehicle } = require('../controllers/driverController');
+
+router.route('/login')
+    .post(login);
 
 // GET - Get all trips for the logged-in driver
-router.get('/trips', authMiddleware, async (req, res) => {
-  const user = req.user;
+router.route('/trips') 
+    .get(authMiddleware, getTrips);
 
-  if (user.role !== 'driver') {
-    return res.status(403).json({ error: 'Access denied. Only drivers can access their trips.' });
-  }
+// GET - Get the vehicle assigned to the logged-in driver
+router.route('/myvehicle')
+    .get(authMiddleware, getMyVehicle);
 
-  try {
-    const trips = await prisma.trip.findMany({
-      where: { driverId: user.id },
-      include: {
-        vehicle: true,
-        bookings: true,
-      },
-      orderBy: {
-        startTime: 'asc',
-      },
-    });
-
-    res.status(200).json(trips);
-  } catch (error) {
-    console.error('Error fetching driver trips:', error);
-    res.status(500).json({ error: 'Failed to fetch driver trips' });
-  }
-});
+// GET - Get all vehicles
+router.route('/vehicleslist')
+    .get(authMiddleware, getVehicles);
 
 // POST - Create fuel log (driver submits odometer + fuel)
 router.post('/fuel-log', authMiddleware, createFuelLog);

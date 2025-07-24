@@ -1,7 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-export const assignTrip = async (req, res) => {
+const assignTrip = async (req, res) => {
   const { bookingIds, mappingId } = req.body;
 
   try {
@@ -88,3 +88,5 @@ export const assignTrip = async (req, res) => {
     res.status(500).json({ error: 'Failed to assign trip' });
   }
 };
+
+module.exports = { assignTrip };
