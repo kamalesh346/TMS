@@ -28,9 +28,6 @@ export default function Navbar() {
       <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
         <Typography variant="h6">Transport System</Typography>
         <Box sx={{ display: "flex", gap: 2 }}>
-          <Button component={RouterLink} to="/dashboard" color="inherit">
-            Dashboard
-          </Button>
           {role === "booker" && (
             <Button component={RouterLink} to="/bookings" color="inherit">
               My Bookings

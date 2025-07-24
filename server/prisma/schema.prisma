@@ -19,6 +19,8 @@ enum BookingStatus {
   rejected
   cancelled
   assigned
+  ongoing 
+  completed
 }
 
 model User {

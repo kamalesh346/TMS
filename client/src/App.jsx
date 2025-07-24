@@ -3,7 +3,7 @@ import React from "react";
 import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
+import DashboardRedirect  from "./pages/DashboardRedirect";
 import Navbar from "./components/Navbar";
 import Bookings from "./pages/Bookings";
 import AdminPanel from "./pages/AdminPanel";
@@ -38,7 +38,7 @@ export default function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <DashboardRedirect  />
             </ProtectedRoute>
           }
         />
