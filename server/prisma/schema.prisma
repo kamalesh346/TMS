@@ -30,8 +30,9 @@ model User {
   password       String
   role           String              // "admin", "driver", "booker"
   createdAt      DateTime            @default(now())
-
   email          String?             @unique
+
+  isDeleted      Boolean             @default(false) 
 
   // Relations
   bookings       Booking[]

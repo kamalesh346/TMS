@@ -56,7 +56,31 @@ export const assignTrip = async (req, res) => {
       bookings[0].requiredEndTime
     );
 
-    // 4. Create the trip
+    // 4️⃣ CHECK if driver or vehicle is already assigned in this time window
+    const overlappingTrip = await prisma.trip.findFirst({
+      where: {
+        OR: [
+          {
+            driverId,
+            startTime: { lt: new Date(endTime) },
+            endTime: { gt: new Date(startTime) },
+          },
+          {
+            vehicleId,
+            startTime: { lt: new Date(endTime) },
+            endTime: { gt: new Date(startTime) },
+          },
+        ],
+      },
+    });
+
+    if (overlappingTrip) {
+      return res.status(400).json({
+        error: 'Driver or Vehicle is already assigned to another trip in this time window',
+      });
+    }
+
+    // 5. Create the trip
     const trip = await prisma.trip.create({
       data: {
         driverId,
@@ -72,7 +96,7 @@ export const assignTrip = async (req, res) => {
       },
     });
 
-    // 5. Update booking statuses
+    // 6. Update booking statuses
     await prisma.booking.updateMany({
       where: {
         id: { in: bookingIds },

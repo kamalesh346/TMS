@@ -1,21 +1,28 @@
-// App.jsx
 import React from "react";
 import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
-import DashboardRedirect  from "./pages/DashboardRedirect";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import ChangePassword from "./pages/ChangePassword";
+import DashboardRedirect from "./pages/DashboardRedirect";
 import Navbar from "./components/Navbar";
 import Bookings from "./pages/Bookings";
 import AdminPanel from "./pages/AdminPanel";
 import DriverTrips from "./pages/DriverTrips";
 import ProtectedRoute from "./components/ProtectedRoute"; 
 import TripAssignmentPage from "./pages/TripAssignmentPage";
+import ManageUsers from "./pages/ManageUsers";
 
 function Layout() {
   const token = localStorage.getItem("token");
   const location = useLocation();
-  const hideNavbarRoutes = ["/login", "/register"];
-  const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname);
+
+  // ✅ Improved navbar hide logic
+  const hideNavbarRoutes = ["/login", "/register", "/forgot-password", "/reset-password"];
+  const shouldHideNavbar = hideNavbarRoutes.some((path) =>
+    location.pathname.startsWith(path)
+  );
 
   return (
     <>
@@ -29,16 +36,19 @@ export default function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
+
         {/* Public Routes */}
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
-
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
+        
         {/* Protected Routes */}
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <DashboardRedirect  />
+              <DashboardRedirect />
             </ProtectedRoute>
           }
         />
@@ -63,17 +73,15 @@ export default function App() {
           }
         />
 
-      {/* Assign-trip */}
-      <Route
-        path="/assign-trip"
-        element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <TripAssignmentPage />
-          </ProtectedRoute>
-        }
-      />
-
-          
+        {/* Assign-trip */}
+        <Route
+          path="/assign-trip"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <TripAssignmentPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Driver-only Route */}
         <Route
@@ -85,8 +93,29 @@ export default function App() {
           }
         />
 
+        {/* Manage Users */}
+        <Route
+          path="/manage-users"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <ManageUsers />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Change Password */}
+        <Route
+          path="/change-password"
+          element={
+            <ProtectedRoute>
+              <ChangePassword />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/login" replace />} />
+
       </Route>
     </Routes>
   );
