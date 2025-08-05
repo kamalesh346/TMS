@@ -52,8 +52,8 @@ const createBooking = async (req, res) => {
 
   // const parsedStart = new Date(startTime);
   // const parsedEnd = new Date(endTime);
-  const parsedStart = new Date(new Date(startTime).getTime() + (5.5 * 60 * 60 * 1000))
-  const parsedEnd = new Date(new Date(endTime).getTime() + (5.5 * 60 * 60 * 1000))
+  const parsedStart = new Date(startTime)
+  const parsedEnd = new Date(endTime)
 
 
   console.log("📥 Received times:", startTime, endTime);
