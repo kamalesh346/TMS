@@ -5,35 +5,33 @@ const prisma = new PrismaClient();
 
 const { createFuelLog } = require('../controllers/fuelLogController');
 const authMiddleware = require('../middleware/authMiddleware');
+const { login, getTrips, updateBookingStatus, getVehicles, getMyVehicle, getBooking, getDriverDetails } = require('../controllers/driverController');
+
+router.route('/login')
+    .post(login);
+
+router.use(authMiddleware);
 
 // GET - Get all trips for the logged-in driver
-router.get('/trips', authMiddleware, async (req, res) => {
-  const user = req.user;
+router.route('/trips') 
+    .get(getTrips);
 
-  if (user.role !== 'driver') {
-    return res.status(403).json({ error: 'Access denied. Only drivers can access their trips.' });
-  }
+router.route('/trips/:bookingId')
+    .get(getBooking)
+    .put(updateBookingStatus)
 
-  try {
-    const trips = await prisma.trip.findMany({
-      where: { driverId: user.id },
-      include: {
-        vehicle: true,
-        bookings: true,
-      },
-      orderBy: {
-        startTime: 'asc',
-      },
-    });
+// GET - Get the vehicle assigned to the logged-in driver
+router.route('/myvehicle')
+    .get(getMyVehicle);
 
-    res.status(200).json(trips);
-  } catch (error) {
-    console.error('Error fetching driver trips:', error);
-    res.status(500).json({ error: 'Failed to fetch driver trips' });
-  }
-});
+router.route('/driver_details')
+    .get(getDriverDetails);
+
+// GET - Get all vehicles
+router.route('/vehicleslist')
+    .get(getVehicles);
 
 // POST - Create fuel log (driver submits odometer + fuel)
-router.post('/fuel-log', authMiddleware, createFuelLog);
+router.post('/fuel-log', createFuelLog);
 
 module.exports = router;

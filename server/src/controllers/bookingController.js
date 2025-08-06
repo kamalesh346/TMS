@@ -50,8 +50,10 @@ const createBooking = async (req, res) => {
   const parsedHeight = parseFloat(vehicleHeight);
   
 
-  const parsedStart = new Date(startTime);
-  const parsedEnd = new Date(endTime);
+  // const parsedStart = new Date(startTime);
+  // const parsedEnd = new Date(endTime);
+  const parsedStart = new Date(startTime)
+  const parsedEnd = new Date(endTime)
 
 
   console.log("📥 Received times:", startTime, endTime);
@@ -188,8 +190,8 @@ const getAllBookings = async (req, res) => {
     filters.vehicleTypeId = parseInt(vehicleTypeId);
   }
 
-  const parsedStart = startDate ? new Date(startDate) : null;
-  const parsedEnd = endDate ? new Date(endDate) : null;
+  const parsedStart = startDate ? new Date(new Date(startTime).getTime() + (5.5 * 60 * 60 * 1000)) : null;
+  const parsedEnd = endDate ? new Date(new Date(endDate).getTime() + (5.5 * 60 * 60 * 1000)) : null;
 
   if ((parsedStart && isNaN(parsedStart.getTime())) || (parsedEnd && isNaN(parsedEnd.getTime()))) {
     return res.status(400).json({ message: 'Invalid date filter format' });
