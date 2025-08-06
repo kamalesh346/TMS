@@ -1,3 +1,4 @@
+// module.exports = router;
 const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
@@ -80,7 +81,7 @@ router.post('/vehicles', authMiddleware, requireAdmin, async (req, res) => {
 });
 
 // ==============================
-// UPDATED: POST - Assign trip using mappingId
+// POST - Assign trip using mappingId
 // ==============================
 router.post('/trips/assign', authMiddleware, requireAdmin, assignTrip);
 
@@ -106,7 +107,6 @@ router.get('/trips', authMiddleware, requireAdmin, async (req, res) => {
         bookings: true,
       },
       orderBy: {
-        // startTime: 'desc',
         createdAt: 'desc',
       },
     });
@@ -117,5 +117,155 @@ router.get('/trips', authMiddleware, requireAdmin, async (req, res) => {
     res.status(500).json({ message: "Failed to fetch trips" });
   }
 });
+
+// ==============================
+// GET - Available Drivers
+// ==============================
+router.get('/available-drivers', authMiddleware, requireAdmin, async (req, res) => {
+  const { startTime, endTime } = req.query;
+
+  if (!startTime || !endTime) {
+    return res.status(400).json({ message: "Start and end time are required" });
+  }
+
+  try {
+    const availableDrivers = await prisma.driver.findMany({
+      where: {
+        trips: {
+          none: {
+            AND: [
+              { startTime: { lt: new Date(endTime) } },
+              { endTime: { gt: new Date(startTime) } },
+            ],
+          },
+        },
+      },
+      include: { user: true },
+    });
+
+    res.json(availableDrivers);
+  } catch (error) {
+    console.error("Error fetching available drivers:", error);
+    res.status(500).json({ message: "Failed to fetch available drivers" });
+  }
+});
+
+// ==============================
+// GET - Available Vehicles
+// ==============================
+router.get('/available-vehicles', authMiddleware, requireAdmin, async (req, res) => {
+  const { startTime, endTime } = req.query;
+
+  if (!startTime || !endTime) {
+    return res.status(400).json({ message: "Start and end time are required" });
+  }
+
+  try {
+    const availableVehicles = await prisma.vehicle.findMany({
+      where: {
+        trips: {
+          none: {
+            AND: [
+              { startTime: { lt: new Date(endTime) } },
+              { endTime: { gt: new Date(startTime) } },
+            ],
+          },
+        },
+      },
+      include: { vehicleType: true },
+    });
+
+    res.json(availableVehicles);
+  } catch (error) {
+    console.error("Error fetching available vehicles:", error);
+    res.status(500).json({ message: "Failed to fetch available vehicles" });
+  }
+});
+
+// ==============================
+// DELETE - Soft delete a user by ID
+// ==============================
+router.delete('/users/:id', authMiddleware, requireAdmin, async (req, res) => {
+  const userId = parseInt(req.params.id);
+
+  try {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { isDeleted: true },
+    });
+
+    res.json({ message: "User deleted successfully", user });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    res.status(500).json({ error: "Failed to delete user" });
+  }
+});
+
+// ==============================
+// GET - Fetch all users (Admin only)
+// ==============================
+router.get('/users', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      where: {
+        isDeleted: false,
+      },
+      select: {
+        id: true,
+        name: true,
+        loginId: true,
+        role: true,
+        email: true,
+        createdAt: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+    res.json(users);
+  } catch (err) {
+    console.error("Error fetching users:", err);
+    res.status(500).json({ message: "Failed to fetch users" });
+  }
+});
+
+// ==============================
+// GET - Fetch single booking details (Admin only)
+// ==============================
+router.get('/bookings/:id', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const bookingId = parseInt(req.params.id);
+    if (isNaN(bookingId)) {
+      return res.status(400).json({ message: "Invalid booking ID" });
+    }
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+        vehicleType: {
+          select: { type: true },
+        },
+      },
+    });
+
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    res.json(booking);
+  } catch (error) {
+    console.error("❌ Error fetching booking details:", error);
+    res.status(500).json({ message: "Failed to fetch booking details" });
+  }
+});
+
+
+
 
 module.exports = router;
