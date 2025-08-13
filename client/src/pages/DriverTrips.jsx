@@ -30,7 +30,6 @@ export default function DriverTrips() {
           headers: { Authorization: `Bearer ${token}` },
         });
         console.log("Driver trips response:", res.data);
-        // Backend might return { trips: [...] } or directly an array
         const data = Array.isArray(res.data.trips)
           ? res.data.trips
           : Array.isArray(res.data)

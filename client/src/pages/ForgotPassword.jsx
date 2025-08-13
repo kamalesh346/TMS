@@ -13,10 +13,14 @@ export default function ForgotPassword() {
     }
 
     try {
-      const res = await axios.post("http://localhost:4000/api/auth/forgot-password", { email });
-      setMessage(res.data.message);
+      const res = await axios.post("/api/auth/forgot-password", { email });
+      setMessage(res.data.message || "Reset link sent successfully");
     } catch (err) {
-      setMessage(err.response?.data?.message || "Error sending reset email");
+      if (err.response) {
+        setMessage(err.response.data.message || "Error sending reset email");
+      } else {
+        setMessage("Server not reachable. Please try again later.");
+      }
     }
   };
 
@@ -35,7 +39,12 @@ export default function ForgotPassword() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
-        <Button variant="contained" fullWidth sx={{ mt: 2 }} onClick={handleSubmit}>
+        <Button
+          variant="contained"
+          fullWidth
+          sx={{ mt: 2 }}
+          onClick={handleSubmit}
+        >
           Send Reset Link
         </Button>
         {message && (
