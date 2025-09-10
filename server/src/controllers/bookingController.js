@@ -175,23 +175,31 @@ const getAllBookings = async (req, res) => {
     return res.status(403).json({ message: 'Only ADMIN can view all bookings' });
   }
 
-  const { status, vehicleType, vehicleTypeId, startDate, endDate } = req.query;
+  const { status, vehicleTypeId, startDate, endDate } = req.query;
   const filters = {};
 
+  // 🔹 Status filter
   if (status) {
-  const validStatus = Object.values(BookingStatus).includes(status);
-  if (!validStatus) {
-    return res.status(400).json({ message: 'Invalid status filter value' });
-  }
-  filters.status = status;
+    const validStatus = Object.values(BookingStatus).includes(status);
+    if (!validStatus) {
+      return res.status(400).json({ message: 'Invalid status filter value' });
+    }
+    filters.status = status;
   }
 
+  // 🔹 Vehicle type filter
   if (vehicleTypeId) {
     filters.vehicleTypeId = parseInt(vehicleTypeId);
   }
 
-  const parsedStart = startDate ? new Date(new Date(startTime).getTime() + (5.5 * 60 * 60 * 1000)) : null;
-  const parsedEnd = endDate ? new Date(new Date(endDate).getTime() + (5.5 * 60 * 60 * 1000)) : null;
+  // 🔹 Date filters (convert safely to Date objects with IST offset)
+  const parsedStart = startDate
+    ? new Date(new Date(startDate).getTime() + (5.5 * 60 * 60 * 1000))
+    : null;
+
+  const parsedEnd = endDate
+    ? new Date(new Date(endDate).getTime() + (5.5 * 60 * 60 * 1000))
+    : null;
 
   if ((parsedStart && isNaN(parsedStart.getTime())) || (parsedEnd && isNaN(parsedEnd.getTime()))) {
     return res.status(400).json({ message: 'Invalid date filter format' });
@@ -219,7 +227,6 @@ const getAllBookings = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch all bookings', error: error.message });
   }
 };
-
 
 // ✅ Cancel a booking (Booker only, if status is pending)
 const cancelBooking = async (req, res) => {
@@ -263,9 +270,6 @@ const updateBookingStatus = async (req, res) => {
     return res.status(403).json({ message: 'Only ADMIN can update status' });
   }
 
-  // if (!['approved', 'rejected'].includes(status)) {
-  //   return res.status(400).json({ message: 'Invalid status value' });
-  // }
   if (!Object.values(BookingStatus).includes(status)) {
     return res.status(400).json({ message: 'Invalid status value' });
   }

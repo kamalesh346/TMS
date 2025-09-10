@@ -105,7 +105,7 @@ model VehicleType {
 }
 
 model Vehicle {
-  id            Int        @id @default(autoincrement())
+  id            Int        @id @default(autoincrement()) 
   number        String     @unique
   vehicleTypeId Int
 
