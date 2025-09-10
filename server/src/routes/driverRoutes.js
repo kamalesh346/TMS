@@ -21,11 +21,11 @@ router.route('/trips/:bookingId')
     .put(updateBookingStatus)
 
 // GET - Get the vehicle assigned to the logged-in driver
-router.route('/myvehicle')
-    .get(getMyVehicle);
+// router.route('/myvehicle')
+//     .get(getMyVehicle);
 
-router.route('/driver_details')
-    .get(getDriverDetails);
+// router.route('/driver_details')
+//     .get(getDriverDetails);
 
 // GET - Get all vehicles
 router.route('/vehicleslist')

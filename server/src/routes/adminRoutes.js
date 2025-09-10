@@ -265,7 +265,29 @@ router.get('/bookings/:id', authMiddleware, requireAdmin, async (req, res) => {
   }
 });
 
+// GET all drivers
+router.get('/drivers', async (req, res) => {
+  try {
+    const drivers = await prisma.user.findMany({
+      where: { role: 'driver' },
+      select: { id: true, name: true, email: true },
+    });
+    res.json(drivers);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch drivers' });
+  }
+});
 
-
+// GET all vehicles
+router.get('/vehicles', async (req, res) => {
+  try {
+    const vehicles = await prisma.vehicle.findMany({
+      include: { vehicleType: true },
+    });
+    res.json(vehicles);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch vehicles' });
+  }
+});
 
 module.exports = router;

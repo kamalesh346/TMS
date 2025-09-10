@@ -37,7 +37,6 @@ model User {
   // Relations
   bookings       Booking[]
   trips          Trip[]              @relation("DriverTrips")
-  driverMapping  DriverVehicle[]
   fuelLogs       FuelLog[]           @relation("DriverFuel")
   createdFuelLog FuelLog[]           @relation("FuelLogCreator")
 
@@ -111,7 +110,6 @@ model Vehicle {
 
   vehicleType   VehicleType    @relation(fields: [vehicleTypeId], references: [id])
   trips         Trip[]
-  mapping       DriverVehicle? @relation("VehicleToDriverMapping")
   fuelLogs      FuelLog[]
 
   @@map("vehicle")
@@ -136,14 +134,4 @@ model Location {
   name  String @unique
 
   @@map("location")
-}
-
-model DriverVehicle {
-  id         Int      @id @default(autoincrement())
-  driverId   Int
-  vehicleId  Int      @unique
-  assignedAt DateTime @default(now())
-
-  driver     User     @relation(fields: [driverId], references: [id])
-  vehicle    Vehicle  @relation("VehicleToDriverMapping", fields: [vehicleId], references: [id])
 }

@@ -354,21 +354,17 @@ const getDriverDetails = async (req, res) => {
     }
 
     try {
-        const driverDetails = await prisma.user.findUnique({
+        const driver = await prisma.user.findUnique({
             where: { id: user.userId },
             select: {
                 name: true,
                 loginId: true,
-                driverMapping: {
+                vehicle: {
                     select: {
-                        vehicle: {
+                        number: true,
+                        vehicleType: {
                             select: {
-                                number: true,
-                                vehicleType: {
-                                    select: {
-                                        type: true
-                                    }
-                                }
+                                type: true
                             }
                         }
                     }
@@ -376,15 +372,15 @@ const getDriverDetails = async (req, res) => {
             }
         });
 
-        if (!driverDetails || !driverDetails.driverMapping?.[0].vehicle) {
+        if (!driver || !driver.vehicle) {
             return res.status(404).json({ error: 'Driver vehicle details not found' });
         }
 
         const result = {
-            name: driverDetails.name,
-            driverId: driverDetails.loginId,
-            vehicleNumber: driverDetails.driverMapping?.[0].vehicle.number,
-            vehicleType: driverDetails.driverMapping?.[0].vehicle.vehicleType.type
+            name: driver.name,
+            driverId: driver.loginId,
+            vehicleNumber: driver.vehicle.number,
+            vehicleType: driver.vehicle.vehicleType.type
         };
 
         res.status(200).json(result);
@@ -393,7 +389,6 @@ const getDriverDetails = async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch driver details' });
     }
 };
-
 
 const getVehicles = async (req, res) => {
     const user = req.user;

@@ -1,41 +1,45 @@
+// src/controllers/tripController.js (or wherever your assignTrip lives)
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 const assignTrip = async (req, res) => {
-  const { bookingIds, mappingId } = req.body;
+  const { bookingIds, driverId, vehicleId } = req.body;
 
   try {
-    // 1. Validate input
-    if (!mappingId || !Array.isArray(bookingIds) || bookingIds.length === 0) {
-      return res.status(400).json({ error: 'Missing mappingId or bookingIds' });
+    // Validate input
+    if (!Array.isArray(bookingIds) || bookingIds.length === 0) {
+      return res.status(400).json({ error: 'bookingIds must be a non-empty array' });
+    }
+    if (!driverId || !vehicleId) {
+      return res.status(400).json({ error: 'driverId and vehicleId are required' });
     }
 
-    // 2. Fetch mapping to get driverId and vehicleId
-    const mapping = await prisma.driverVehicle.findUnique({
-      where: { id: mappingId },
-    });
-
-    if (!mapping) {
-      return res.status(404).json({ error: 'Driver-Vehicle mapping not found' });
+    const parsedDriverId = Number(driverId);
+    const parsedVehicleId = Number(vehicleId);
+    if (isNaN(parsedDriverId) || isNaN(parsedVehicleId)) {
+      return res.status(400).json({ error: 'driverId and vehicleId must be numeric' });
     }
 
-    const { driverId, vehicleId } = mapping;
+    // Validate driver exists and is a driver
+    const driver = await prisma.user.findUnique({ where: { id: parsedDriverId } });
+    if (!driver || (driver.role && driver.role.toLowerCase() !== 'driver')) {
+      return res.status(400).json({ error: 'Invalid driver selected' });
+    }
 
-    // 3. Fetch required times from selected bookings
+    // Validate vehicle exists
+    const vehicle = await prisma.vehicle.findUnique({ where: { id: parsedVehicleId } });
+    if (!vehicle) {
+      return res.status(400).json({ error: 'Invalid vehicle selected' });
+    }
+
+    // Fetch bookings and ensure they are approved
     const bookings = await prisma.booking.findMany({
-      where: {
-        id: { in: bookingIds },
-      },
-      select: {
-        id: true,
-        requiredStartTime: true,
-        requiredEndTime: true,
-        status: true,
-      },
+      where: { id: { in: bookingIds } },
+      select: { id: true, requiredStartTime: true, requiredEndTime: true, status: true },
     });
 
     if (bookings.length === 0) {
-      return res.status(400).json({ error: 'No valid bookings found' });
+      return res.status(400).json({ error: 'No valid bookings found for given bookingIds' });
     }
 
     const notApproved = bookings.filter(b => b.status !== 'approved');
@@ -46,29 +50,29 @@ const assignTrip = async (req, res) => {
       });
     }
 
+    // Compute aggregated start & end time for the trip
     const startTime = bookings.reduce(
       (min, b) => (b.requiredStartTime < min ? b.requiredStartTime : min),
       bookings[0].requiredStartTime
     );
-
     const endTime = bookings.reduce(
       (max, b) => (b.requiredEndTime > max ? b.requiredEndTime : max),
       bookings[0].requiredEndTime
     );
 
-    // 4️⃣ CHECK if driver or vehicle is already assigned in this time window
+    // Check overlapping trips for driver or vehicle
     const overlappingTrip = await prisma.trip.findFirst({
       where: {
         OR: [
           {
-            driverId,
-            startTime: { lt: new Date(endTime) },
-            endTime: { gt: new Date(startTime) },
+            driverId: parsedDriverId,
+            startTime: { lt: endTime },
+            endTime: { gt: startTime },
           },
           {
-            vehicleId,
-            startTime: { lt: new Date(endTime) },
-            endTime: { gt: new Date(startTime) },
+            vehicleId: parsedVehicleId,
+            startTime: { lt: endTime },
+            endTime: { gt: startTime },
           },
         ],
       },
@@ -77,39 +81,37 @@ const assignTrip = async (req, res) => {
     if (overlappingTrip) {
       return res.status(400).json({
         error: 'Driver or Vehicle is already assigned to another trip in this time window',
+        overlappingTripId: overlappingTrip.id,
       });
     }
 
-    // 5. Create the trip
-    const trip = await prisma.trip.create({
-      data: {
-        driverId,
-        vehicleId,
-        startTime,
-        endTime,
-        bookings: {
-          connect: bookingIds.map((id) => ({ id })),
+    // Create trip and update bookings in one transaction
+    const trip = await prisma.$transaction(async (tx) => {
+      const createdTrip = await tx.trip.create({
+        data: {
+          driverId: parsedDriverId,
+          vehicleId: parsedVehicleId,
+          startTime,
+          endTime,
+          bookings: {
+            connect: bookingIds.map((id) => ({ id })),
+          },
         },
-      },
-      include: {
-        bookings: true,
-      },
-    });
+        include: { bookings: true },
+      });
 
-    // 6. Update booking statuses
-    await prisma.booking.updateMany({
-      where: {
-        id: { in: bookingIds },
-      },
-      data: {
-        status: 'assigned',
-      },
+      await tx.booking.updateMany({
+        where: { id: { in: bookingIds } },
+        data: { status: 'assigned', tripId: createdTrip.id },
+      });
+
+      return createdTrip;
     });
 
     res.status(201).json({ message: 'Trip assigned successfully', trip });
   } catch (error) {
     console.error('Error assigning trip:', error);
-    res.status(500).json({ error: 'Failed to assign trip' });
+    res.status(500).json({ error: 'Failed to assign trip', details: error.message });
   }
 };
 

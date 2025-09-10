@@ -1,59 +1,61 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+// no use since driver-vehicle mapping is removed
 
-// Assign driver to vehicle
-exports.assignDriverToVehicle = async (req, res) => {
-  const { driverId, vehicleId } = req.body;
+// const { PrismaClient } = require('@prisma/client');
+// const prisma = new PrismaClient();
 
-  const parsedDriverId = parseInt(driverId);
-  const parsedVehicleId = parseInt(vehicleId);
+// // Assign driver to vehicle
+// exports.assignDriverToVehicle = async (req, res) => {
+//   const { driverId, vehicleId } = req.body;
 
-  if (isNaN(parsedDriverId) || isNaN(parsedVehicleId)) {
-    return res.status(400).json({ message: 'Invalid driver or vehicle ID.' });
-  }
+//   const parsedDriverId = parseInt(driverId);
+//   const parsedVehicleId = parseInt(vehicleId);
 
-  try {
-    // Check if the vehicle is already assigned
-    const existing = await prisma.driverVehicle.findFirst({
-      where: { vehicleId: parsedVehicleId },
-    });
+//   if (isNaN(parsedDriverId) || isNaN(parsedVehicleId)) {
+//     return res.status(400).json({ message: 'Invalid driver or vehicle ID.' });
+//   }
 
-    if (existing) {
-      // Optional: allow reassignment by deleting existing
-      await prisma.driverVehicle.delete({
-        where: { id: existing.id },
-      });
-    }
+//   try {
+//     // Check if the vehicle is already assigned
+//     const existing = await prisma.driverVehicle.findFirst({
+//       where: { vehicleId: parsedVehicleId },
+//     });
 
-    const mapping = await prisma.driverVehicle.create({
-      data: {
-        driverId: parsedDriverId,
-        vehicleId: parsedVehicleId,
-      },
-    });
+//     if (existing) {
+//       // Optional: allow reassignment by deleting existing
+//       await prisma.driverVehicle.delete({
+//         where: { id: existing.id },
+//       });
+//     }
 
-    res.status(201).json({ message: 'Driver assigned successfully.', mapping });
-  } catch (err) {
-    console.error('Assign driver error:', err);
-    res.status(500).json({ message: 'Something went wrong.' });
-  }
-};
+//     const mapping = await prisma.driverVehicle.create({
+//       data: {
+//         driverId: parsedDriverId,
+//         vehicleId: parsedVehicleId,
+//       },
+//     });
 
-// Get all current mappings
-exports.getDriverVehicleMappings = async (req, res) => {
-  try {
-    const mappings = await prisma.driverVehicle.findMany({
-      include: {
-        driver: true,
-        vehicle: {
-          include: { vehicleType: true },
-        },
-      },
-    });
+//     res.status(201).json({ message: 'Driver assigned successfully.', mapping });
+//   } catch (err) {
+//     console.error('Assign driver error:', err);
+//     res.status(500).json({ message: 'Something went wrong.' });
+//   }
+// };
 
-    res.json(mappings);
-  } catch (err) {
-    console.error('Fetch mappings error:', err);
-    res.status(500).json({ message: 'Failed to fetch mappings' });
-  }
-};
+// // Get all current mappings
+// exports.getDriverVehicleMappings = async (req, res) => {
+//   try {
+//     const mappings = await prisma.driverVehicle.findMany({
+//       include: {
+//         driver: true,
+//         vehicle: {
+//           include: { vehicleType: true },
+//         },
+//       },
+//     });
+
+//     res.json(mappings);
+//   } catch (err) {
+//     console.error('Fetch mappings error:', err);
+//     res.status(500).json({ message: 'Failed to fetch mappings' });
+//   }
+// };

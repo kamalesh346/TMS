@@ -53,18 +53,18 @@ export default function AdminPanel() {
   const [driverVehicleModalOpen, setDriverVehicleModalOpen] = useState(false);
   const [drivers, setDrivers] = useState([]);
   const [vehicles, setVehicles] = useState([]);
-  const [newMapping, setNewMapping] = useState({
-    driverId: "",
-    vehicleId: ""
-  });
-  const [driverVehicleMappings, setDriverVehicleMappings] = useState([]);
+  // const [newMapping, setNewMapping] = useState({
+  //   driverId: "",
+  //   vehicleId: ""
+  // });
+  // const [driverVehicleMappings, setDriverVehicleMappings] = useState([]);
   const [userModalOpen, setUserModalOpen] = useState(false);
 
   useEffect(() => {
     fetchVehicleTypes();
     fetchBookings();
     fetchDriversAndVehicles();
-    fetchDriverVehicleMappings();
+    // fetchDriverVehicleMappings();
   }, []);
 
   const fetchVehicleTypes = async () => {
@@ -117,17 +117,17 @@ export default function AdminPanel() {
     }
   };
   
-  const fetchDriverVehicleMappings = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await axios.get("/api/driver-vehicle/mappings", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setDriverVehicleMappings(res.data);
-    } catch (err) {
-      console.error("Failed to fetch driver-vehicle mappings", err);
-    }
-  };
+  // const fetchDriverVehicleMappings = async () => {
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //     const res = await axios.get("/api/driver-vehicle/mappings", {
+  //       headers: { Authorization: `Bearer ${token}` },
+  //     });
+  //     setDriverVehicleMappings(res.data);
+  //   } catch (err) {
+  //     console.error("Failed to fetch driver-vehicle mappings", err);
+  //   }
+  // };
 
   const handleSearch = () => {
     fetchBookings();
@@ -198,21 +198,21 @@ export default function AdminPanel() {
     }
   };
 
-  const handleAssignDriverToVehicle = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      await axios.post("/api/driver-vehicle/assign", newMapping, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      alert("Driver assigned successfully");
-      setDriverVehicleModalOpen(false);
-      setNewMapping({ driverId: "", vehicleId: "" });
-      fetchDriverVehicleMappings();    
-    } catch (err) {
-      console.error("Driver assignment failed", err);
-      alert("Failed to assign driver");
-    }
-  };
+  // const handleAssignDriverToVehicle = async () => {
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //     await axios.post("/api/driver-vehicle/assign", newMapping, {
+  //       headers: { Authorization: `Bearer ${token}` },
+  //     });
+  //     alert("Driver assigned successfully");
+  //     setDriverVehicleModalOpen(false);
+  //     setNewMapping({ driverId: "", vehicleId: "" });
+  //     fetchDriverVehicleMappings();    
+  //   } catch (err) {
+  //     console.error("Driver assignment failed", err);
+  //     alert("Failed to assign driver");
+  //   }
+  // };
   
   const paginatedBookings = bookings.slice(
     (page - 1) * itemsPerPage,
@@ -262,7 +262,8 @@ export default function AdminPanel() {
         <Button variant="outlined" onClick={() => setLocationModalOpen(true)}>Add Location</Button>
         <Button variant="outlined" onClick={() => setVehicleTypeModalOpen(true)}>Add Vehicle Type</Button>
         <Button variant="outlined" onClick={() => setVehicleModalOpen(true)}>Add Vehicle</Button>
-        <Button variant="outlined" onClick={() => setDriverVehicleModalOpen(true)}>Assign Driver to Vehicle</Button>
+        {/* <Button variant="outlined" onClick={() => setDriverVehicleModalOpen(true)}>Assign Driver to Vehicle</Button> */}
+        
         <Button component={Link} to="/assign-trip" variant="outlined">Assign Trip</Button>
         <Button component={Link} to="/manage-users" variant="outlined">Manage Users</Button>
       </Box>
@@ -313,10 +314,10 @@ export default function AdminPanel() {
       />
       
       {/* Driver-Vehicle Mappings Section */}
-      <Divider sx={{ my: 4 }} />
-      <Typography variant="h6" gutterBottom>Driver-Vehicle Mappings</Typography>
+      {/* <Divider sx={{ my: 4 }} /> */}
+      {/* <Typography variant="h6" gutterBottom>Driver-Vehicle Mappings</Typography> */}
 
-      {driverVehicleMappings.map((mapping) => {
+      {/* {driverVehicleMappings.map((mapping) => {
         if (!mapping.driver || !mapping.vehicle || !mapping.vehicle.vehicleType) {
           console.warn('❌ Incomplete mapping:', mapping);
           return null;
@@ -330,7 +331,7 @@ export default function AdminPanel() {
             />
           </ListItem>
         );
-      })}
+      })} */}
 
       {/* Add Location Modal */}
       <Modal open={locationModalOpen} onClose={() => setLocationModalOpen(false)}>
@@ -396,7 +397,7 @@ export default function AdminPanel() {
       </Modal>
 
       {/* Assign Driver Modal */}
-      <Modal open={driverVehicleModalOpen} onClose={() => setDriverVehicleModalOpen(false)}>
+      {/* <Modal open={driverVehicleModalOpen} onClose={() => setDriverVehicleModalOpen(false)}>
         <Box sx={modalStyle}>
           <Typography variant="h6" gutterBottom>Assign Driver to Vehicle</Typography>
 
@@ -427,7 +428,7 @@ export default function AdminPanel() {
             <Button variant="contained" onClick={handleAssignDriverToVehicle}>Assign</Button>
           </Stack>
         </Box>
-      </Modal>
+      </Modal> */}
 
       <AddUserModal
         open={userModalOpen}

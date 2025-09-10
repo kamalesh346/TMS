@@ -7,7 +7,7 @@ const authRoutes = require('./routes/authRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const dropdownRoutes = require('./routes/dropdownRoutes');
 const adminRoutes = require('./routes/adminRoutes');
-const driverVehicleRoutes = require('./routes/driverVehicleRoutes');
+// const driverVehicleRoutes = require('./routes/driverVehicleRoutes');
 const driverRoutes = require('./routes/driverRoutes');
 const app = express();
 
@@ -25,7 +25,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/dropdowns', dropdownRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/driver-vehicle', driverVehicleRoutes);
+// app.use('/api/driver-vehicle', driverVehicleRoutes);
 app.use('/api/driver',driverRoutes);
 // Optional 404 handler
 app.use((req, res) => {
