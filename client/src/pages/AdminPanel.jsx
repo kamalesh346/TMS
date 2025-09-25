@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from "react";
 import {
-  Container, Typography, List, ListItem, ListItemText, Button, Box,
-  Modal, Pagination, MenuItem, TextField, Stack, Divider
+  Menu, Container, Typography, List, ListItem, ListItemText, Button, Box,
+  Modal, Pagination, MenuItem, TextField, Stack
 } from "@mui/material";
 import axios from "axios";
 import dayjs from "dayjs";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AddUserModal from "../components/AddUserModal"; 
 import AdminBookingDetailsModal from "../components/AdminBookingDetailsModal";
 
-const modalStyle = {
+
+  export default function AdminPanel() {
+    const modalStyle = {
   position: "absolute",
   top: "50%",
   left: "50%",
@@ -22,8 +24,6 @@ const modalStyle = {
 };
 
 const statusOptions = ["all", "pending", "approved", "rejected", "cancelled", "ongoing", "completed"];
-
-export default function AdminPanel() {
   const [bookings, setBookings] = useState([]);
   const [selectedBookingId, setSelectedBookingId] = useState(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
@@ -50,21 +50,14 @@ export default function AdminPanel() {
     number: "",
     vehicleTypeId: ""
   });
-  const [driverVehicleModalOpen, setDriverVehicleModalOpen] = useState(false);
   const [drivers, setDrivers] = useState([]);
   const [vehicles, setVehicles] = useState([]);
-  // const [newMapping, setNewMapping] = useState({
-  //   driverId: "",
-  //   vehicleId: ""
-  // });
-  // const [driverVehicleMappings, setDriverVehicleMappings] = useState([]);
   const [userModalOpen, setUserModalOpen] = useState(false);
 
   useEffect(() => {
     fetchVehicleTypes();
     fetchBookings();
     fetchDriversAndVehicles();
-    // fetchDriverVehicleMappings();
   }, []);
 
   const fetchVehicleTypes = async () => {
@@ -117,18 +110,6 @@ export default function AdminPanel() {
     }
   };
   
-  // const fetchDriverVehicleMappings = async () => {
-  //   try {
-  //     const token = localStorage.getItem("token");
-  //     const res = await axios.get("/api/driver-vehicle/mappings", {
-  //       headers: { Authorization: `Bearer ${token}` },
-  //     });
-  //     setDriverVehicleMappings(res.data);
-  //   } catch (err) {
-  //     console.error("Failed to fetch driver-vehicle mappings", err);
-  //   }
-  // };
-
   const handleSearch = () => {
     fetchBookings();
     setPage(1);
@@ -197,27 +178,29 @@ export default function AdminPanel() {
       alert("Failed to add vehicle");
     }
   };
-
-  // const handleAssignDriverToVehicle = async () => {
-  //   try {
-  //     const token = localStorage.getItem("token");
-  //     await axios.post("/api/driver-vehicle/assign", newMapping, {
-  //       headers: { Authorization: `Bearer ${token}` },
-  //     });
-  //     alert("Driver assigned successfully");
-  //     setDriverVehicleModalOpen(false);
-  //     setNewMapping({ driverId: "", vehicleId: "" });
-  //     fetchDriverVehicleMappings();    
-  //   } catch (err) {
-  //     console.error("Driver assignment failed", err);
-  //     alert("Failed to assign driver");
-  //   }
-  // };
   
   const paginatedBookings = bookings.slice(
     (page - 1) * itemsPerPage,
     page * itemsPerPage
   );
+  const navigate = useNavigate();
+
+  // state for dashboard dropdown
+  const [anchorEl, setAnchorEl] = useState(null);
+  const menuOpen = Boolean(anchorEl);
+
+  const handleMenuClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleNavigate = (path) => {
+    navigate(path);
+    handleMenuClose();
+  };
 
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>
@@ -262,10 +245,20 @@ export default function AdminPanel() {
         <Button variant="outlined" onClick={() => setLocationModalOpen(true)}>Add Location</Button>
         <Button variant="outlined" onClick={() => setVehicleTypeModalOpen(true)}>Add Vehicle Type</Button>
         <Button variant="outlined" onClick={() => setVehicleModalOpen(true)}>Add Vehicle</Button>
-        {/* <Button variant="outlined" onClick={() => setDriverVehicleModalOpen(true)}>Assign Driver to Vehicle</Button> */}
-        
         <Button component={Link} to="/assign-trip" variant="outlined">Assign Trip</Button>
         <Button component={Link} to="/manage-users" variant="outlined">Manage Users</Button>
+        {/* ✅ Added Dashboard Button */}
+        <Button variant="outlined" onClick={handleMenuClick}>Dashboard</Button>
+
+  <Menu
+    anchorEl={anchorEl}
+    open={menuOpen}
+    onClose={handleMenuClose}
+  >
+    <MenuItem onClick={() => handleNavigate("/admin/dashboard/drivers")}>Drivers</MenuItem>
+    <MenuItem onClick={() => handleNavigate("/admin/dashboard/fuel")}>Fuel Logs</MenuItem>
+    <MenuItem onClick={() => handleNavigate("/admin/dashboard/vehicles")}>Vehicles</MenuItem>
+  </Menu>
       </Box>
 
       {/* Booking List */}
@@ -312,26 +305,6 @@ export default function AdminPanel() {
         onClose={() => setDetailsModalOpen(false)}
         onUpdateStatus={handleUpdateStatus}
       />
-      
-      {/* Driver-Vehicle Mappings Section */}
-      {/* <Divider sx={{ my: 4 }} /> */}
-      {/* <Typography variant="h6" gutterBottom>Driver-Vehicle Mappings</Typography> */}
-
-      {/* {driverVehicleMappings.map((mapping) => {
-        if (!mapping.driver || !mapping.vehicle || !mapping.vehicle.vehicleType) {
-          console.warn('❌ Incomplete mapping:', mapping);
-          return null;
-        }
-
-        return (
-          <ListItem key={mapping.id} divider>
-            <ListItemText
-              primary={`${mapping.driver.name} (${mapping.driver.email})`}
-              secondary={`Vehicle: ${mapping.vehicle.number} | Type: ${mapping.vehicle.vehicleType.type}`}
-            />
-          </ListItem>
-        );
-      })} */}
 
       {/* Add Location Modal */}
       <Modal open={locationModalOpen} onClose={() => setLocationModalOpen(false)}>
@@ -396,40 +369,6 @@ export default function AdminPanel() {
         </Box>
       </Modal>
 
-      {/* Assign Driver Modal */}
-      {/* <Modal open={driverVehicleModalOpen} onClose={() => setDriverVehicleModalOpen(false)}>
-        <Box sx={modalStyle}>
-          <Typography variant="h6" gutterBottom>Assign Driver to Vehicle</Typography>
-
-          <TextField
-            select fullWidth label="Driver"
-            value={newMapping.driverId}
-            onChange={(e) => setNewMapping({ ...newMapping, driverId: e.target.value })}
-            sx={{ mb: 2 }}
-          >
-            {drivers.map((driver) => (
-              <MenuItem key={driver.id} value={driver.id}>{driver.name} ({driver.email})</MenuItem>
-            ))}
-          </TextField>
-
-          <TextField
-            select fullWidth label="Vehicle"
-            value={newMapping.vehicleId}
-            onChange={(e) => setNewMapping({ ...newMapping, vehicleId: e.target.value })}
-            sx={{ mb: 2 }}
-          >
-            {vehicles.map((v) => (
-              <MenuItem key={v.id} value={v.id}>{v.number}</MenuItem>
-            ))}
-          </TextField>
-
-          <Stack direction="row" spacing={2} justifyContent="flex-end">
-            <Button onClick={() => setDriverVehicleModalOpen(false)}>Cancel</Button>
-            <Button variant="contained" onClick={handleAssignDriverToVehicle}>Assign</Button>
-          </Stack>
-        </Box>
-      </Modal> */}
-
       <AddUserModal
         open={userModalOpen}
         onClose={() => setUserModalOpen(false)}
@@ -438,7 +377,6 @@ export default function AdminPanel() {
           setUserModalOpen(false);
         }}
       />
-
     </Container>
   );
 }

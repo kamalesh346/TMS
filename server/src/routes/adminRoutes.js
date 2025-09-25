@@ -1,4 +1,4 @@
-// module.exports = router;
+// modified to add fuelRoutes.js
 const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
@@ -6,6 +6,10 @@ const prisma = new PrismaClient();
 const authMiddleware = require('../middleware/authMiddleware');
 const requireAdmin = require('../middleware/requireAdmin');
 const { assignTrip } = require('../controllers/tripController');
+const fuelLogController = require('../controllers/fuelLogController');
+
+// GET /api/fuel
+router.get('/fuel', authMiddleware, requireAdmin, fuelLogController.getFuelLogs);
 
 // ==============================
 // POST - Add new location
@@ -266,7 +270,7 @@ router.get('/bookings/:id', authMiddleware, requireAdmin, async (req, res) => {
 });
 
 // GET all drivers
-router.get('/drivers', async (req, res) => {
+router.get('/drivers', authMiddleware, requireAdmin, async (req, res) => {
   try {
     const drivers = await prisma.user.findMany({
       where: { role: 'driver' },

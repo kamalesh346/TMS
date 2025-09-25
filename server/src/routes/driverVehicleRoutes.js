@@ -1,3 +1,5 @@
+// no use since driver vehicle mapping is removed
+
 // const express = require('express');
 // const router = express.Router();
 // const {

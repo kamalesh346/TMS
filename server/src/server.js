@@ -7,6 +7,7 @@ const authRoutes = require('./routes/authRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const dropdownRoutes = require('./routes/dropdownRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+// const fuelRoutes = require('./routes/fuelRoutes');
 // const driverVehicleRoutes = require('./routes/driverVehicleRoutes');
 const driverRoutes = require('./routes/driverRoutes');
 const app = express();
@@ -21,6 +22,7 @@ app.get('/', (req, res) => {
 });
 
 // Route mounting
+// app.use('/api/fuel', fuelRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/dropdowns', dropdownRoutes);

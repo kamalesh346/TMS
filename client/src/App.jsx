@@ -13,6 +13,10 @@ import DriverTrips from "./pages/DriverTrips";
 import ProtectedRoute from "./components/ProtectedRoute"; 
 import TripAssignmentPage from "./pages/TripAssignmentPage";
 import ManageUsers from "./pages/ManageUsers";
+import Dashboard from "./pages/Dashboard";   // ✅ Admin hub
+import DriversPage from "./pages/DriversPage";
+import FuelPage from "./pages/FuelPage";
+import VehiclesPage from "./pages/VehiclesPage";
 
 function Layout() {
   const token = localStorage.getItem("token");
@@ -36,19 +40,64 @@ export default function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
-
         {/* Public Routes */}
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         
-        {/* Protected Routes */}
+        {/* Role-based entry point */}
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <DashboardRedirect />
+              <DashboardRedirect /> {/* ✅ routes to /admin, /bookings, /driver */}
+            </ProtectedRoute>
+          }
+        />
+
+        {/* AdminPanel (admin lands here first) */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminPanel />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Admin Dashboard Hub (accessible from AdminPanel button) */}
+        <Route
+          path="/admin/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Sub Dashboards */}
+        <Route
+          path="/admin/dashboard/drivers"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <DriversPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/dashboard/fuel"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <FuelPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/dashboard/vehicles"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <VehiclesPage />
             </ProtectedRoute>
           }
         />
@@ -59,16 +108,6 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={["booker"]}>
               <Bookings />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Admin-only Route */}
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <AdminPanel />
             </ProtectedRoute>
           }
         />
@@ -115,7 +154,6 @@ export default function App() {
 
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/login" replace />} />
-
       </Route>
     </Routes>
   );

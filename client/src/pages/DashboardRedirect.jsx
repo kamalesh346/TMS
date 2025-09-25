@@ -1,36 +1,29 @@
-import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode"; // ✅ Corrected import
+import React from "react";
+import { Navigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
 export default function DashboardRedirect() {
-  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
 
-    if (!token) {
-      navigate("/login");
-      return;
+  try {
+    const decoded = jwtDecode(token);
+    const role = decoded.role;
+
+    if (role === "admin") {
+      return <Navigate to="/admin" replace />;
+    } else if (role === "booker") {
+      return <Navigate to="/bookings" replace />;
+    } else if (role === "driver") {
+      return <Navigate to="/driver" replace />;
     }
+  } catch (err) {
+    console.error("Token decode error:", err);
+    return <Navigate to="/login" replace />;
+  }
 
-    try {
-      const decoded = jwtDecode(token); // ✅ Corrected usage
-      const role = decoded.role;
-
-      if (role === "admin") {
-        navigate("/admin");
-      } else if (role === "booker") {
-        navigate("/bookings");
-      } else if (role === "driver") {
-        navigate("/driver");
-      } else {
-        navigate("/login");
-      }
-    } catch (err) {
-      console.error("Token decode error:", err);
-      navigate("/login");
-    }
-  }, [navigate]);
-
-  return null; // or <CircularProgress /> if you want a loader
+  return <Navigate to="/login" replace />;
 }
